@@ -64,7 +64,7 @@ struct CallControls: View {
             }
             ForEach(model.devices.devices) { device in
                 Button {
-                    model.devices.selectedDeviceID = device.id
+                    model.devices.choose(device)
                 } label: {
                     if device.id == model.devices.selectedDeviceID {
                         Label(device.name, systemImage: "checkmark")

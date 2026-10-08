@@ -15,12 +15,22 @@ final class AudioDeviceManager: ObservableObject {
     @Published private(set) var devices: [AudioInputDevice] = []
     @Published var selectedDeviceID: AudioDeviceID = 0
 
+    /// The user's own pick, remembered across launches. Automatic fallbacks
+    /// (a device unplugged) go through `selectedDeviceID` and aren't saved.
+    func choose(_ device: AudioInputDevice) {
+        selectedDeviceID = device.id
+        UserDefaults.standard.set(device.uid, forKey: "micUID")
+    }
+
     private var listenerInstalled = false
 
     init() {
         refresh()
-        // Default to the system's current default input device.
-        if let def = Self.defaultInputDeviceID(), devices.contains(where: { $0.id == def }) {
+        // Prefer the mic picked last time, else the system default input.
+        if let uid = UserDefaults.standard.string(forKey: "micUID"),
+           let saved = devices.first(where: { $0.uid == uid }) {
+            selectedDeviceID = saved.id
+        } else if let def = Self.defaultInputDeviceID(), devices.contains(where: { $0.id == def }) {
             selectedDeviceID = def
         } else {
             selectedDeviceID = devices.first?.id ?? 0

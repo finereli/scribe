@@ -6,15 +6,18 @@ import CoreAudio
 /// Core Audio process tap. No virtual driver, no screen-recording permission:
 /// macOS asks once for "System Audio Recording" and that's it.
 ///
-/// The tap is wrapped in a private aggregate device whose main sub-device is
-/// the current output device. The output device is what clocks the tap: an
-/// aggregate holding only the tap runs only while something else keeps the
-/// hardware awake, and went silent after the first sound in testing.
+/// The tap is wrapped in a private aggregate device with one real output
+/// device as its clock. An aggregate holding only the tap runs only while
+/// something else keeps the hardware awake, and went silent after the first
+/// sound in testing.
 ///
-/// When the output device is a headset (AirPods), its microphone becomes one
-/// of the aggregate's inputs too. The tap's streams come after the
-/// sub-devices', so the IO callback takes only the last buffers, the ones
-/// belonging to the tap, and the user's voice stays out of "Them".
+/// The clock must not have a microphone. Using Bluetooth buds as the clock
+/// would open their mic and drop them into low-quality call mode, even when
+/// the call itself uses the Mac's built-in mic. So the clock is the current
+/// output if it has no input, otherwise the built-in speakers (which play
+/// nothing; drift compensation absorbs the clock difference). As a second
+/// guard, the IO callback takes only the tap's buffers, which come after any
+/// sub-device's.
 final class SystemAudioCapture {
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
@@ -45,9 +48,9 @@ final class SystemAudioCapture {
             throw Self.error("The system audio tap reported an unusable format.")
         }
 
-        guard let outputUID = Self.defaultOutputUID() else {
+        guard let outputUID = Self.clockDeviceUID() else {
             stop()
-            throw Self.error("Couldn't find the Mac's audio output device.")
+            throw Self.error("Couldn't find an audio output device to clock the capture.")
         }
         let aggregate: [String: Any] = [
             kAudioAggregateDeviceNameKey: "Scribe System Audio",
@@ -109,7 +112,22 @@ final class SystemAudioCapture {
         tapID = AudioObjectID(kAudioObjectUnknown)
     }
 
-    private static func defaultOutputUID() -> String? {
+    /// The default output if it has no microphone, else a built-in output.
+    private static func clockDeviceUID() -> String? {
+        var candidates: [AudioDeviceID] = []
+        if let def = defaultOutput() { candidates.append(def) }
+        candidates += allDevices().filter {
+            transportType($0) == kAudioDeviceTransportTypeBuiltIn && channels($0, kAudioObjectPropertyScopeOutput) > 0
+        }
+        guard let device = candidates.first(where: {
+            channels($0, kAudioObjectPropertyScopeOutput) > 0 && channels($0, kAudioObjectPropertyScopeInput) == 0
+        }) else { return nil }
+        let uid = stringProperty(device, kAudioDevicePropertyDeviceUID)
+        Log.write("System audio: clocked by \(stringProperty(device, kAudioObjectPropertyName) ?? "?")")
+        return uid
+    }
+
+    private static func defaultOutput() -> AudioDeviceID? {
         var address = AudioObjectPropertyAddress(
             mSelector: kAudioHardwarePropertyDefaultOutputDevice,
             mScope: kAudioObjectPropertyScopeGlobal,
@@ -119,15 +137,63 @@ final class SystemAudioCapture {
         guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address,
                                          0, nil, &size, &device) == noErr, device != 0
         else { return nil }
+        return device
+    }
 
-        address.mSelector = kAudioDevicePropertyDeviceUID
-        var uid: CFString? = nil
-        size = UInt32(MemoryLayout<CFString?>.size)
-        let status = withUnsafeMutablePointer(to: &uid) {
+    private static func allDevices() -> [AudioDeviceID] {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &address,
+                                             0, nil, &size) == noErr else { return [] }
+        var ids = [AudioDeviceID](repeating: 0, count: Int(size) / MemoryLayout<AudioDeviceID>.size)
+        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address,
+                                         0, nil, &size, &ids) == noErr else { return [] }
+        return ids
+    }
+
+    private static func transportType(_ device: AudioDeviceID) -> UInt32 {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyTransportType,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain)
+        var value: UInt32 = 0
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value)
+        return value
+    }
+
+    private static func channels(_ device: AudioDeviceID, _ scope: AudioObjectPropertyScope) -> Int {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreamConfiguration,
+            mScope: scope,
+            mElement: kAudioObjectPropertyElementMain)
+        var size: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(device, &address, 0, nil, &size) == noErr, size > 0
+        else { return 0 }
+        let raw = UnsafeMutableRawPointer.allocate(
+            byteCount: Int(size), alignment: MemoryLayout<AudioBufferList>.alignment)
+        defer { raw.deallocate() }
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, raw) == noErr
+        else { return 0 }
+        let list = UnsafeMutableAudioBufferListPointer(raw.assumingMemoryBound(to: AudioBufferList.self))
+        return list.reduce(0) { $0 + Int($1.mNumberChannels) }
+    }
+
+    private static func stringProperty(_ device: AudioDeviceID,
+                                       _ selector: AudioObjectPropertySelector) -> String? {
+        var address = AudioObjectPropertyAddress(
+            mSelector: selector,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain)
+        var value: CFString? = nil
+        var size = UInt32(MemoryLayout<CFString?>.size)
+        let status = withUnsafeMutablePointer(to: &value) {
             AudioObjectGetPropertyData(device, &address, 0, nil, &size, $0)
         }
-        guard status == noErr else { return nil }
-        return uid as String?
+        return status == noErr ? value as String? : nil
     }
 
     private func check(_ status: OSStatus, _ what: String) throws {
