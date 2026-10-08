@@ -1,0 +1,4 @@
+.build/
+Scribe.app/
+*.zip
+.DS_Store
