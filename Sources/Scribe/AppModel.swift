@@ -256,7 +256,7 @@ final class AppModel: ObservableObject {
         pasteboard.clearContents()
         pasteboard.setString(prompt, forType: .string)
         assistant.open()
-        showToast("Copied. Paste it into \(assistant.name) with ⌘V", seconds: 4)
+        FloatingToast.show("Copied. Now paste it into \(assistant.name) with ⌘V", logo: assistant.logo)
     }
 
     func showToast(_ message: String, seconds: Double = 1.6) {

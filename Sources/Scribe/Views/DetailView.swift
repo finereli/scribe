@@ -149,7 +149,7 @@ private struct AssistantLabel: View {
                 Text(assistant.name).font(.system(size: 12, weight: .medium))
             }
             Image(systemName: "arrow.up.right")
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 7, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
     }
