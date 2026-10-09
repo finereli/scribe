@@ -1,0 +1,25 @@
+{
+  "name": "scribe-video",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Short square video of the Scribe window for X",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "npm run render:dark && npm run render:light && npm run still:dark && npm run still:light",
+    "render:dark": "remotion render ScribeDark out/scribe-dark.mp4 --codec=h264 --pixel-format=yuv420p --crf=18 --color-space=bt709",
+    "render:light": "remotion render ScribeLight out/scribe-light.mp4 --codec=h264 --pixel-format=yuv420p --crf=18 --color-space=bt709",
+    "still:dark": "remotion still ScribeDark out/scribe-dark.png --frame=270",
+    "still:light": "remotion still ScribeLight out/scribe-light.png --frame=270",
+    "fonts": "mkdir -p public/fonts && cp /System/Library/Fonts/SFNSRounded.ttf public/fonts/",
+    "prerender": "npm run fonts",
+    "prestudio": "npm run fonts"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.534",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.534",
+    "typescript": "^7.0.2"
+  }
+}

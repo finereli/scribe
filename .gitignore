@@ -4,3 +4,10 @@ Scribe.app/
 .DS_Store
 *.dmg
 launch.md
+positioning-notes.md
+
+# Remotion video project
+video/node_modules/
+video/out/
+video/.remotion/
+video/public/fonts/
