@@ -39,7 +39,7 @@
     <rect x="130" y="360" width="14" height="66" rx="7"/>
     <rect x="152" y="376" width="14" height="34" rx="7"/>
   </g>
-  <text x="194" y="415" font-family="'.SF NS Rounded', 'Helvetica Neue', sans-serif" font-weight="700" font-size="56" fill="#6E6E73" letter-spacing="-1">No bot joins the call.</text>
+  <text x="194" y="415" font-family="'.SF NS Rounded', 'Helvetica Neue', sans-serif" font-weight="700" font-size="56" fill="#6E6E73" letter-spacing="-1">Paste them into Claude or ChatGPT.</text>
 
   <text x="64" y="556" font-family="'.SF NS Rounded', 'Helvetica Neue', sans-serif" font-weight="500" font-size="26" fill="#6E6E73">Free and open source. No account, no server.</text>
   <text x="1136" y="556" text-anchor="end" font-family="'.SF NS Rounded', 'Helvetica Neue', sans-serif" font-weight="600" font-size="26" fill="#0068D6">scribe.finereli.com</text>
