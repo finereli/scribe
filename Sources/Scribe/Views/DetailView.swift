@@ -32,6 +32,14 @@ struct DetailView: View {
         .toolbar {
             if let session = model.selected {
                 ToolbarItemGroup {
+                    ForEach(Assistant.allCases, id: \.self) { assistant in
+                        Button { model.send(session, to: assistant) } label: {
+                            AssistantLabel(assistant: assistant)
+                        }
+                        .help("Copy the transcript and open \(assistant.name)")
+                    }
+                }
+                ToolbarItemGroup {
                     Button { model.copyTranscript(session) } label: {
                         Image(systemName: "doc.on.doc")
                     }.help("Copy transcript")
@@ -123,5 +131,26 @@ struct DetailView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 8)
         .background(Color.yellow.opacity(0.12))
+    }
+}
+
+/// A brand mark with a small "opens elsewhere" arrow.
+private struct AssistantLabel: View {
+    let assistant: Assistant
+
+    var body: some View {
+        HStack(spacing: 3) {
+            if let logo = assistant.logo {
+                Image(nsImage: logo)
+                    .resizable()
+                    .renderingMode(logo.isTemplate ? .template : .original)
+                    .frame(width: 16, height: 16)
+            } else {
+                Text(assistant.name).font(.system(size: 12, weight: .medium))
+            }
+            Image(systemName: "arrow.up.right")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+        }
     }
 }

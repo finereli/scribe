@@ -20,6 +20,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN/Scribe" "$APP/Contents/MacOS/Scribe"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 [ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+cp Resources/claude.pdf Resources/chatgpt.pdf "$APP/Contents/Resources/"
 
 if [ "$SIGN" = "1" ]; then
     echo "Signing with Developer ID (hardened runtime + timestamp)…"

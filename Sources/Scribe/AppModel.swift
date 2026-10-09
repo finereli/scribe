@@ -239,11 +239,31 @@ final class AppModel: ObservableObject {
         showToast("Transcript copied")
     }
 
-    func showToast(_ message: String) {
+    /// Copy the transcript with a line of context, then open the assistant
+    /// so pasting is the only step left.
+    func send(_ session: Session, to assistant: Assistant) {
+        let text = session.transcriptText
+        guard !text.isEmpty else {
+            showToast("Nothing to send yet")
+            return
+        }
+        let prompt = """
+        Here's the transcript of a call I just had. It was transcribed automatically on my Mac, so some words may be misheard. "Me" is me and "Them" is the other side of the call.
+
+        \(text)
+        """
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(prompt, forType: .string)
+        assistant.open()
+        showToast("Copied. Paste it into \(assistant.name) with ⌘V", seconds: 4)
+    }
+
+    func showToast(_ message: String, seconds: Double = 1.6) {
         toast = message
         toastTask?.cancel()
         toastTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(1.6))
+            try? await Task.sleep(for: .seconds(seconds))
             guard !Task.isCancelled else { return }
             self?.toast = nil
         }
