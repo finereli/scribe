@@ -28,4 +28,8 @@ xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
 xcrun stapler staple "$DMG"
 xcrun stapler validate "$DMG"
 
-echo "Ready: $ZIP $DMG"
+# A stable name too, so releases/latest/download/Scribe.dmg always works.
+cp "$DMG" Scribe.dmg
+
+echo "Ready: $ZIP $DMG Scribe.dmg"
+echo "Publish: gh release create v$VERSION $DMG $ZIP Scribe.dmg"
