@@ -35,6 +35,7 @@ final class SystemAudioCapture {
         description.muteBehavior = .unmuted
 
         try check(AudioHardwareCreateProcessTap(description, &tapID), "create the system audio tap")
+        Log.write("system audio: tap created")
 
         var asbd = AudioStreamBasicDescription()
         var size = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
@@ -67,6 +68,7 @@ final class SystemAudioCapture {
         ]
         try check(AudioHardwareCreateAggregateDevice(aggregate as CFDictionary, &aggregateID),
                   "create the capture device")
+        Log.write("system audio: aggregate created")
 
         // The tap's share of the input: one buffer per channel when
         // non-interleaved, else one buffer.

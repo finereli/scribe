@@ -23,13 +23,17 @@ final class CallRecorder {
     /// the errors come back so the UI can say what's missing.
     func start(micDevice: AudioDeviceID) -> [String] {
         var problems: [String] = []
+        Log.write("mic: starting device \(micDevice)")
         do {
             try mic.start(deviceID: micDevice) { [micStream] in micStream.ingest($0) }
+            Log.write("mic: started")
         } catch {
             problems.append("Microphone: \(error.localizedDescription)")
         }
+        Log.write("system audio: starting")
         do {
             try system.start { [systemStream] in systemStream.ingest($0) }
+            Log.write("system audio: started")
         } catch {
             problems.append("System audio: \(error.localizedDescription)")
         }

@@ -31,9 +31,15 @@ final class MicCapture {
         input.installTap(onBus: 0, bufferSize: 2048, format: format) { buffer, _ in
             handler(buffer)
         }
+        Log.write("mic: format \(format)")
         engine.prepare()
         try engine.start()
         self.engine = engine
+        // The engine stops itself when the audio setup changes (buds
+        // connecting, Meet switching devices). Say so in the log.
+        NotificationCenter.default.addObserver(
+            forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil
+        ) { _ in Log.write("mic: engine configuration changed, running=\(engine.isRunning)") }
     }
 
     func stop() {
