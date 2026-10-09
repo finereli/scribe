@@ -117,21 +117,18 @@ final class AppModel: ObservableObject {
 
         let recorder = CallRecorder(folder: store.folder(for: session.id),
                                     languageCode: languageCode, start: now)
-        for stream in [recorder.micStream, recorder.systemStream] {
-            let speaker = stream.recognizer.speaker
-            // All three callbacks arrive on the main queue.
-            stream.recognizer.onUpdate = { [weak self] turn in
-                MainActor.assumeIsolated { self?.apply(turn, to: session.id) }
-            }
-            stream.recognizer.onError = { [weak self] message in
-                Log.write("recognizer error: \(message)")
-                MainActor.assumeIsolated { self?.notice = message }
-            }
-            stream.onLevel = { [weak self] level in
-                MainActor.assumeIsolated {
-                    if speaker == .me { self?.micLevel = level } else { self?.systemLevel = level }
-                }
-            }
+        // These callbacks all arrive on the main queue.
+        recorder.recognition.onUpdate = { [weak self] turn in
+            MainActor.assumeIsolated { self?.apply(turn, to: session.id) }
+        }
+        recorder.recognition.onError = { [weak self] message in
+            MainActor.assumeIsolated { self?.notice = message }
+        }
+        recorder.micStream.onLevel = { [weak self] level in
+            MainActor.assumeIsolated { self?.micLevel = level }
+        }
+        recorder.systemStream.onLevel = { [weak self] level in
+            MainActor.assumeIsolated { self?.systemLevel = level }
         }
 
         self.recorder = recorder

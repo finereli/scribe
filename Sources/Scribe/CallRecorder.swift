@@ -7,15 +7,18 @@ import CoreAudio
 final class CallRecorder {
     let micStream: SpeakerStream
     let systemStream: SpeakerStream
+    let recognition: RecognitionQueue
     private let mic = MicCapture()
     private let system = SystemAudioCapture()
 
     init(folder: URL, languageCode: String, start: Date) {
+        let recognition = RecognitionQueue(languageCode: languageCode)
+        self.recognition = recognition
         micStream = SpeakerStream(
-            recognizer: TurnRecognizer(speaker: .me, languageCode: languageCode),
+            recognizer: TurnRecognizer(speaker: .me, recognition: recognition),
             fileURL: folder.appendingPathComponent(Session.micFile), callStart: start)
         systemStream = SpeakerStream(
-            recognizer: TurnRecognizer(speaker: .them, languageCode: languageCode),
+            recognizer: TurnRecognizer(speaker: .them, recognition: recognition),
             fileURL: folder.appendingPathComponent(Session.systemFile), callStart: start)
     }
 
