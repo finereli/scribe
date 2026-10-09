@@ -1,0 +1,7 @@
+name = "scribe-site"
+compatibility_date = "2025-01-01"
+account_id = "7485eb8ab648601f411b650cd794bce3"
+assets = { directory = "./public" }
+[[routes]]
+pattern = "scribe.finereli.com"
+custom_domain = true

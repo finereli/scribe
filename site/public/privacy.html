@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy - Scribe</title>
+<meta name="description" content="Scribe collects nothing. Your recordings and transcripts stay on your Mac.">
+<link rel="canonical" href="https://scribe.finereli.com/privacy">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F3F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161618" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Scribe">
+<meta property="og:title" content="Scribe privacy policy">
+<meta property="og:description" content="Scribe collects nothing. Your recordings and transcripts stay on your Mac.">
+<meta property="og:image" content="https://scribe.finereli.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="/" aria-label="Scribe home">
+    <img src="/favicon.svg" alt="" width="36" height="36">
+    Scribe
+  </a>
+  <nav aria-label="Site">
+    <a href="https://github.com/finereli/scribe">GitHub</a>
+  </nav>
+</header>
+
+<main class="wrap doc">
+  <div class="prose">
+    <h1>Privacy</h1>
+    <p class="updated">Last updated October 9, 2026</p>
+
+    <p>The short version: Scribe collects nothing. There's no account, no server, and no analytics. What you record stays on your Mac.</p>
+
+    <h2>What Scribe stores</h2>
+    <p>When you record a call, Scribe saves your side and their side as two audio files, plus the transcript, in a folder on your Mac:</p>
+    <p><code>~/Library/Application Support/Scribe</code></p>
+    <p>Scribe also keeps a small log file there, <code>scribe.log</code>, so a call that went wrong can be diagnosed. It records things like when the microphone started, and it includes the transcribed text too, so treat it as you would a transcript. Like everything else in that folder, it never leaves your Mac.</p>
+    <p>Nothing is uploaded anywhere by Scribe. You can open the folder from the app, and deleting a call in the app deletes its folder. If you delete the app, the folder stays until you remove it yourself.</p>
+
+    <h2>Speech recognition</h2>
+    <p>Scribe doesn't do speech recognition itself. It asks macOS to do it.</p>
+    <ul>
+      <li><b>English</b> is transcribed entirely on your Mac.</li>
+      <li><b>Other languages</b> (Hebrew and Russian) are sent by macOS to Apple's speech service, the same one dictation uses. That's covered by <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a>, not this one.</li>
+    </ul>
+
+    <h2>What Scribe doesn't do</h2>
+    <ul>
+      <li>It doesn't collect analytics, usage data or crash reports.</li>
+      <li>It doesn't have servers, so there's nothing for your data to be sent to.</li>
+      <li>It doesn't share anything with anyone, because it doesn't have anything to share.</li>
+    </ul>
+
+    <h2>This website</h2>
+    <p>This site is a few static files. It sets no cookies and runs no analytics or tracking scripts. Downloads are served by GitHub.</p>
+
+    <h2>Questions</h2>
+    <p>Scribe is open source, so you can check all of this in <a href="https://github.com/finereli/scribe">the code</a>. If you have a question, open an issue at <a href="https://github.com/finereli/scribe/issues">github.com/finereli/scribe/issues</a>.</p>
+  </div>
+</main>
+
+<footer class="wrap foot">
+  <span>Made by <a href="https://github.com/finereli">Eli Finer</a>. MIT license.</span>
+  <nav aria-label="Footer">
+    <a href="/">Home</a>
+    <a href="https://github.com/finereli/scribe">Source</a>
+    <a href="https://github.com/finereli/scribe/issues">Report a problem</a>
+  </nav>
+</footer>
+</body>
+</html>

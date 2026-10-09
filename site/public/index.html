@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scribe - a free call transcriber for the Mac</title>
+<meta name="description" content="Scribe transcribes your Zoom, Google Meet, WhatsApp and FaceTime calls on your Mac, without a bot joining the call. Free and open source. No account, no server.">
+<link rel="canonical" href="https://scribe.finereli.com/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F2F3F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161618" media="(prefers-color-scheme: dark)">
+
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Scribe">
+<meta property="og:url" content="https://scribe.finereli.com/">
+<meta property="og:title" content="Scribe - transcribe your calls on your Mac">
+<meta property="og:description" content="A free call transcriber for the Mac. Works with Zoom, Google Meet, WhatsApp, FaceTime, or anything else that talks through your speakers, and no bot joins the call.">
+<meta property="og:image" content="https://scribe.finereli.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Scribe: transcribe your calls on your Mac. No bot joins the call.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Scribe - transcribe your calls on your Mac">
+<meta name="twitter:description" content="A free call transcriber for the Mac. Works with Zoom, Google Meet, WhatsApp, FaceTime, or anything else that talks through your speakers, and no bot joins the call.">
+<meta name="twitter:image" content="https://scribe.finereli.com/og.png">
+<meta name="twitter:image:alt" content="Scribe: transcribe your calls on your Mac. No bot joins the call.">
+
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="wrap top">
+  <a class="brand" href="/" aria-label="Scribe home">
+    <img src="/favicon.svg" alt="" width="36" height="36">
+    Scribe
+  </a>
+  <nav aria-label="Site">
+    <a class="optional" href="#compare">Compare</a>
+    <a class="optional" href="#install">Install</a>
+    <a href="https://github.com/finereli/scribe">GitHub</a>
+  </nav>
+</header>
+
+<main id="main">
+
+<section class="wrap hero">
+  <div>
+    <h1 class="headline">
+      <span class="voice me"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="said">Transcribe your calls on your Mac.</span></span>
+      <span class="voice them"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="said">No bot joins the call.</span></span>
+    </h1>
+    <p class="lede">Scribe is a free call transcriber for the Mac. It works with Zoom, Google Meet, WhatsApp, FaceTime, or anything else that talks through your speakers, and it doesn't need a bot to join the call.</p>
+    <div class="get">
+      <a class="download" href="https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v10m0 0-4-4m4 4 4-4M3.5 13.5v1.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download for Mac
+      </a>
+      <a class="source" href="https://github.com/finereli/scribe">Read the source on GitHub</a>
+    </div>
+    <p class="fine">Free and open source. Needs macOS&nbsp;14.2 or later. 1&nbsp;MB download.</p>
+  </div>
+
+  <figure class="window" aria-label="An example of a call being transcribed in Scribe">
+    <div class="titlebar" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="callhead">
+      <div>
+        <strong>Call with Dana</strong>
+        <small><span class="rec" aria-hidden="true"></span>Recording 22:41 &#160; English</small>
+      </div>
+      <div class="meters" aria-hidden="true">
+        <span>Me</span><span class="meter me"></span>
+        <span>Them</span><span class="meter them"></span>
+      </div>
+    </div>
+    <ol class="turns">
+      <li class="turn them">
+        <div class="who"><b>Them</b><time>21:52</time></div>
+        <p>The main thing for us is having everyone set up before the end of the quarter.</p>
+      </li>
+      <li class="turn me">
+        <div class="who"><b>Me</b><time>22:03</time></div>
+        <p>That's doable. How many people are we talking about?</p>
+      </li>
+      <li class="turn them">
+        <div class="who"><b>Them</b><time>22:09</time></div>
+        <p>Forty to start. And legal will want to see the contract before the 14th.</p>
+      </li>
+      <li class="turn me">
+        <div class="who"><b>Me</b><time>22:24</time></div>
+        <p>Got it. I'll send it over tomorrow <span class="partial">so they have the weekend.</span></p>
+      </li>
+    </ol>
+    <figcaption>Your microphone is <b>Me</b>. Whatever your Mac plays is <b>Them</b>.</figcaption>
+  </figure>
+</section>
+
+<section class="section story" aria-labelledby="story">
+  <div class="wrap split">
+    <h2 id="story">Why I made this</h2>
+    <div>
+      <div class="prose">
+        <p>A while ago I was on an important sales call. A few minutes in I realized we were on <em>their</em> Google Meet, not mine, which meant my note-taking bot was sitting in the waiting room. To get a transcript I'd have had to ask the buyer, in the middle of a pitch, to please let my robot in. I didn't. It felt like asking someone to let you record them while you're trying to get them to trust you.</p>
+        <p>So I had no transcript. Afterwards I tried to reconstruct what they'd told me, and I'd missed things that turned out to matter. I closed the deal, but barely.</p>
+        <p>That happened a few more times. The other tools I tried were either bots, which have the same problem, or they ran big speech models that made my laptop work hard for an hour after every call. Then I noticed that my Mac was already pretty good at turning speech into text. It's been doing it for dictation for years. So I built the thing I actually wanted on top of that.</p>
+        <p class="signature">Eli Finer</p>
+      </div>
+      <aside class="for" aria-labelledby="for">
+        <h3 id="for">Who it's for</h3>
+        <p>People who spend their days on calls and don't like taking notes: founders, salespeople, coaches, managers. If you've ever finished a call and thought "wait, what was the number they said?", this is for you.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="different">
+  <div class="wrap split">
+    <h2 id="different">What's different</h2>
+    <dl class="points">
+      <div class="point">
+        <dt>There's no bot.</dt>
+        <dd>Nobody gets a "Scribe Notetaker wants to join" message. It doesn't matter whose meeting it is or which app it's in. Scribe listens on your Mac, the same way you do.</dd>
+      </div>
+      <div class="point">
+        <dt>Your audio stays on your Mac.</dt>
+        <dd>The recording and the transcript are files on your disk. There's no account and no server.
+          <small>One caveat: English is transcribed entirely on your Mac. For other languages, macOS sends the audio to Apple's speech service, the same one dictation uses.</small></dd>
+      </div>
+      <div class="point">
+        <dt>It's light.</dt>
+        <dd>Scribe uses the speech recognizer that's already in macOS rather than shipping its own model. The app is about 2 MB, and an hour of call is about 30 MB of audio. It runs on Apple Silicon and Intel Macs alike.</dd>
+      </div>
+      <div class="point">
+        <dt>It knows who said what.</dt>
+        <dd>Your microphone is <span class="chip me">Me</span> and whatever comes out of your Mac is <span class="chip them">Them</span>. For the usual one-on-one call, that's all the speaker detection you need, and it doesn't have to guess.</dd>
+      </div>
+      <div class="point">
+        <dt>It's free.</dt>
+        <dd>No trial, no plans, no account. The code is on GitHub under the MIT license.</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="now">
+  <div class="wrap split">
+    <h2 id="now">Why now</h2>
+    <div class="prose">
+      <p>Until recently the built-in transcription wasn't good enough to be worth keeping. Now it is, at least for what most of us actually do with transcripts: paste them into Claude or ChatGPT and ask</p>
+      <ul class="asks">
+        <li>What did they agree to?</li>
+        <li>What objections came up?</li>
+        <li>Write the follow-up email.</li>
+      </ul>
+      <p>An AI reading the transcript doesn't need every word to be perfect. It needs the conversation, and it needs it without you having to ask anyone's permission.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="compare" aria-labelledby="compare-h">
+  <div class="wrap">
+    <h2 id="compare-h">Compared to what's out there</h2>
+    <p class="compare-intro">I pay for Fathom and MacWhisper, and both are good at what they do. I tried Granola too.</p>
+    <table class="compare">
+      <thead>
+        <tr><td></td><th scope="col" class="scribe">Scribe</th><th scope="col">Fathom</th><th scope="col">Granola</th><th scope="col">MacWhisper</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">How it hears the call</th><td class="scribe" data-col="Scribe">On your Mac</td><td data-col="Fathom">A bot joins the call</td><td data-col="Granola">On your Mac</td><td data-col="MacWhisper">On your Mac</td></tr>
+        <tr><th scope="row">Works on someone else's meeting without asking</th><td class="scribe" data-col="Scribe">Yes</td><td data-col="Fathom">Only if they let the bot in</td><td data-col="Granola">Yes</td><td data-col="MacWhisper">Yes</td></tr>
+        <tr><th scope="row">Where your audio goes</th><td class="scribe" data-col="Scribe">Stays on your Mac (English)</td><td data-col="Fathom">Their servers</td><td data-col="Granola">Transcribed in their cloud</td><td data-col="MacWhisper">Stays on your Mac</td></tr>
+        <tr><th scope="row">Transcription engine</th><td class="scribe" data-col="Scribe">Built into macOS</td><td data-col="Fathom">Cloud</td><td data-col="Granola">Cloud</td><td data-col="MacWhisper">Whisper models you download</td></tr>
+        <tr><th scope="row">Load on your Mac</th><td class="scribe" data-col="Scribe">Light</td><td data-col="Fathom">None</td><td data-col="Granola">Light</td><td data-col="MacWhisper">Heavy, especially with the better models</td></tr>
+        <tr><th scope="row">Account needed</th><td class="scribe" data-col="Scribe">No</td><td data-col="Fathom">Yes</td><td data-col="Granola">Yes</td><td data-col="MacWhisper">No</td></tr>
+        <tr><th scope="row">Summaries and analysis</th><td class="scribe" data-col="Scribe">Paste into your own AI</td><td data-col="Fathom">Built in</td><td data-col="Granola">Built in</td><td data-col="MacWhisper">Some built in</td></tr>
+        <tr><th scope="row">Your old transcripts</th><td class="scribe" data-col="Scribe">Files on your disk, forever</td><td data-col="Fathom">In their app</td><td data-col="Granola">Free plan: last 30 days</td><td data-col="MacWhisper">Files on your disk</td></tr>
+        <tr><th scope="row">Price</th><td class="scribe" data-col="Scribe">Free and open source</td><td data-col="Fathom">Free tier, paid plans</td><td data-col="Granola">Free tier, paid from $14/month</td><td data-col="MacWhisper">Free version, paid Pro</td></tr>
+      </tbody>
+    </table>
+    <p class="compare-outro">Fathom is great when you own the meeting and everyone expects a notetaker. Granola is great if you want AI-written notes and don't mind the cloud. MacWhisper is great for transcribing recordings as accurately as possible. Scribe is for when you just want the transcript, on your own Mac, without paying for it or making it anyone else's business.</p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="know">
+  <div class="wrap split">
+    <h2 id="know">Good to know</h2>
+    <ul class="caveats">
+      <li><b>Use headphones.</b> <span>If the other person comes out of your speakers, your mic hears them too, and some of their words end up under "Me".</span></li>
+      <li><b>When you talk over each other, one side's words show up a few seconds late.</b> <span>macOS transcribes one stream at a time, so Scribe takes turns. Nothing is lost.</span></li>
+      <li><b>"Them" is everything your Mac plays.</b> <span>A notification sound or a song during the call gets recorded too.</span></li>
+      <li><b>One language per call.</b> <span>English, Hebrew or Russian. The built-in recognizer can't switch languages mid-sentence.</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" id="install" aria-labelledby="install-h">
+  <div class="wrap split">
+    <h2 id="install-h">Install and use</h2>
+    <div class="howto">
+      <div>
+        <h3>Install</h3>
+        <ol class="steps">
+          <li><span><a href="https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg">Download Scribe</a> and drag it to Applications.</span></li>
+          <li><span>Open it. macOS will ask for three permissions: <b>Microphone</b> (your side), <b>Speech Recognition</b> (the transcript), and <b>System Audio Recording</b> (their side). Allow all three.</span></li>
+        </ol>
+        <p class="note">Requires macOS 14.2 (Sonoma) or later. Built for both Apple Silicon and Intel Macs.</p>
+      </div>
+      <div>
+        <h3>Use</h3>
+        <ol class="steps">
+          <li><span>Pick the call's language.</span></li>
+          <li><span>Press the red button (or <kbd>⌘R</kbd>) when the call starts. Check that the Me and Them meters move.</span></li>
+          <li><span>Talk. The transcript appears as you go.</span></li>
+          <li><span>Press stop, then copy the transcript and paste it wherever you think.</span></li>
+        </ol>
+        <p class="note">Every call is kept in its own folder with both sides recorded separately, so you can re-transcribe them later with anything you like.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closing" aria-labelledby="get">
+  <div class="wrap">
+  <img src="/favicon.svg" alt="" width="112" height="112">
+  <h2 id="get">Get Scribe</h2>
+  <p>Version 1.0.0. Signed and notarized by Apple.</p>
+  <div class="get">
+    <a class="download" href="https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v10m0 0-4-4m4 4 4-4M3.5 13.5v1.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download for Mac
+    </a>
+    <a class="source" href="https://github.com/finereli/scribe">Read the source on GitHub</a>
+  </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap foot">
+  <span>Made by <a href="https://finereli.com">Eli Finer</a>. MIT license.</span>
+  <nav aria-label="Footer">
+    <a href="https://github.com/finereli/scribe">Source</a>
+    <a href="https://github.com/finereli/scribe/releases">Releases</a>
+    <a href="https://github.com/finereli/scribe/issues">Report a problem</a>
+    <a href="/privacy">Privacy</a>
+  </nav>
+</footer>
+</body>
+</html>
