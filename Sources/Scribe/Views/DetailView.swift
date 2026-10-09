@@ -5,6 +5,7 @@ struct DetailView: View {
     @EnvironmentObject var model: AppModel
     @State private var editingTitle = false
     @State private var titleDraft = ""
+    @FocusState private var titleFocused: Bool
 
     var body: some View {
         Group {
@@ -53,13 +54,32 @@ struct DetailView: View {
     private func header(_ session: Session) -> some View {
         HStack(spacing: 10) {
             if editingTitle {
-                TextField("Title", text: $titleDraft, onCommit: {
-                    model.rename(session, to: titleDraft)
-                    editingTitle = false
-                })
-                .textFieldStyle(.roundedBorder)
-                .font(.system(size: 17, weight: .semibold))
-                .frame(maxWidth: 360)
+                TextField("Title", text: $titleDraft)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: 360)
+                    .focused($titleFocused)
+                    .onSubmit { commitTitle(session) }
+                    .onExitCommand { editingTitle = false }
+                    // Clicking elsewhere saves, like Finder.
+                    .onChange(of: titleFocused) {
+                        if !titleFocused && editingTitle { commitTitle(session) }
+                    }
+                    .onAppear {
+                        // Focus once the field exists, then select the old
+                        // title so typing replaces it.
+                        DispatchQueue.main.async {
+                            titleFocused = true
+                            DispatchQueue.main.async {
+                                NSApp.sendAction(#selector(NSResponder.selectAll(_:)), to: nil, from: nil)
+                            }
+                        }
+                    }
+                Button("Save") { commitTitle(session) }
+                    .keyboardShortcut(.defaultAction)
+                    .controlSize(.small)
+                Button("Cancel") { editingTitle = false }
+                    .controlSize(.small)
             } else {
                 Text(session.title)
                     .font(.system(size: 17, weight: .semibold))
@@ -85,6 +105,11 @@ struct DetailView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 12)
+    }
+
+    private func commitTitle(_ session: Session) {
+        model.rename(session, to: titleDraft.trimmingCharacters(in: .whitespaces))
+        editingTitle = false
     }
 
     private func noticeBar(_ text: String) -> some View {
