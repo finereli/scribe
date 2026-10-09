@@ -32,6 +32,9 @@ final class AppModel: ObservableObject {
     }
     /// Non-fatal trouble during a call, shown under the transcript.
     @Published var notice: String?
+    /// A brief confirmation ("Transcript copied") that fades on its own.
+    @Published private(set) var toast: String?
+    private var toastTask: Task<Void, Never>?
 
     @Published private(set) var liveID: Session.ID?
     @Published private(set) var elapsed: TimeInterval = 0
@@ -225,9 +228,25 @@ final class AppModel: ObservableObject {
     }
 
     func copyTranscript(_ session: Session) {
+        let text = session.transcriptText
+        guard !text.isEmpty else {
+            showToast("Nothing to copy yet")
+            return
+        }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(session.transcriptText, forType: .string)
+        pasteboard.setString(text, forType: .string)
+        showToast("Transcript copied")
+    }
+
+    func showToast(_ message: String) {
+        toast = message
+        toastTask?.cancel()
+        toastTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1.6))
+            guard !Task.isCancelled else { return }
+            self?.toast = nil
+        }
     }
 
     func reveal(_ session: Session) {
