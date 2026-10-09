@@ -276,13 +276,12 @@ kbd {
 /* Send-to-AI buttons, as in the app's toolbar. */
 .titlebar .send { margin-left: auto; display: flex; gap: 6px; }
 .titlebar .ai {
-  display: inline-flex; align-items: center; gap: 3px;
-  padding: 4px 7px;
+  display: inline-flex; align-items: center;
+  padding: 4px 6px;
   border-radius: 7px; background: var(--segment-off);
   color: var(--ink);
 }
 .titlebar .ai svg { width: 16px; height: 16px; display: block; }
-.titlebar .ai svg.arr { width: 9px; height: 9px; color: var(--muted); }
 
 .callhead {
   display: flex;

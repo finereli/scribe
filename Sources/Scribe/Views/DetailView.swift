@@ -134,12 +134,12 @@ struct DetailView: View {
     }
 }
 
-/// A brand mark with a small "opens elsewhere" arrow.
+/// The assistant's brand mark, or its name if the mark is missing.
 private struct AssistantLabel: View {
     let assistant: Assistant
 
     var body: some View {
-        HStack(spacing: 3) {
+        Group {
             if let logo = assistant.logo {
                 Image(nsImage: logo)
                     .resizable()
@@ -148,9 +148,6 @@ private struct AssistantLabel: View {
             } else {
                 Text(assistant.name).font(.system(size: 12, weight: .medium))
             }
-            Image(systemName: "arrow.up.right")
-                .font(.system(size: 7, weight: .semibold))
-                .foregroundStyle(.secondary)
         }
     }
 }

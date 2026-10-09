@@ -36,7 +36,7 @@ People who spend their days on calls and don't like taking notes: founders, sale
 
 ## Why now
 
-Until recently the built-in transcription wasn't good enough to be worth keeping. Now it is, at least for what most of us actually do with transcripts: paste them into Claude or ChatGPT and ask "what did they agree to?", "what objections came up?", "write the follow-up email". An AI reading the transcript doesn't need every word to be perfect. It needs the conversation, and it needs it without you having to ask anyone's permission.
+Until recently the built-in transcription wasn't good enough to be worth keeping. Now it is, at least for what most of us actually do with transcripts: paste them into Claude or ChatGPT. An AI reading the transcript doesn't need every word to be perfect. It needs the conversation, and it needs it without you having to ask anyone's permission.
 
 And the bots are being shown the door. In August 2026 Microsoft gave Teams admins a policy to detect and block notetaker bots. A tool that never joins the meeting doesn't have that problem.
 
