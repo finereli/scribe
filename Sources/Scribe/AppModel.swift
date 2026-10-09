@@ -86,7 +86,7 @@ final class AppModel: ObservableObject {
 
     func start() {
         guard !isRecording else { return }
-        Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) speech=\(SFSpeechRecognizer.authorizationStatus().rawValue) device=\(devices.activeDevice?.name ?? "none") mode=\(devices.mode.rawValue) lang=\(languageCode)")
+        Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) speech=\(SFSpeechRecognizer.authorizationStatus().rawValue) device=\(devices.activeDevice?.name ?? "none") follows=\(devices.followsDefault) lang=\(languageCode)")
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .denied, .restricted:
             errorMessage = "Microphone access is off. Turn it on in System Settings ▸ Privacy & Security ▸ Microphone."

@@ -59,10 +59,17 @@ struct CallControls: View {
 
     private var micMenu: some View {
         Menu {
-            modeButton(.call, "Same as Call",
-                       detail: model.devices.name(of: model.devices.callDeviceID))
-            modeButton(.system, "Same as System",
-                       detail: model.devices.name(of: model.devices.defaultInputID))
+            Button {
+                model.devices.followDefault()
+            } label: {
+                let name = model.devices.name(of: model.devices.defaultInputID)
+                let title = "Same as System" + (name.map { " (\($0))" } ?? "")
+                if model.devices.followsDefault {
+                    Label(title, systemImage: "checkmark")
+                } else {
+                    Text(title)
+                }
+            }
             Divider()
             if model.devices.devices.isEmpty {
                 Text("No input devices found")
@@ -71,7 +78,7 @@ struct CallControls: View {
                 Button {
                     model.devices.choose(device)
                 } label: {
-                    if model.devices.mode == .fixed && device.id == model.devices.selectedDeviceID {
+                    if !model.devices.followsDefault && device.id == model.devices.selectedDeviceID {
                         Label(device.name, systemImage: "checkmark")
                     } else {
                         Text(device.name)
@@ -94,20 +101,7 @@ struct CallControls: View {
         .frame(maxWidth: .infinity)
         .noFocusRing()
         .pointingHandCursor()
-        .help("Which microphone is you. \"Same as Call\" records the mic your call app is using.")
-    }
-
-    private func modeButton(_ mode: MicMode, _ title: String, detail: String?) -> some View {
-        Button {
-            model.devices.use(mode)
-        } label: {
-            let text = title + (detail.map { " (\($0))" } ?? "")
-            if model.devices.mode == mode {
-                Label(text, systemImage: "checkmark")
-            } else {
-                Text(text)
-            }
-        }
+        .help("Which microphone is you. \"Same as System\" follows the macOS input.")
     }
 
     /// Icon pinned left, chevron pinned right, text centered.

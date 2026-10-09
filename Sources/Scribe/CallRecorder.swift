@@ -26,7 +26,8 @@ final class CallRecorder {
     /// Starts both sides. A failure on one side doesn't stop the other;
     /// the errors come back so the UI can say what's missing.
     /// `micDevice` is asked again every couple of seconds; when its answer
-    /// changes (buds connected, a new system default) the mic follows.
+    /// changes (a new system default, a device picked mid-call) the mic
+    /// follows.
     func start(micDevice: @escaping () -> AudioDeviceID) -> [String] {
         currentMicDevice = micDevice
         self.micDevice = micDevice()
