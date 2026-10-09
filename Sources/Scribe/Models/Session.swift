@@ -30,16 +30,25 @@ struct Session: Identifiable, Codable, Hashable {
     /// files can be lined up again when re-transcribing.
     var micOffset: TimeInterval?
     var systemOffset: TimeInterval?
+    /// Who "Them" is on this call, if you've said.
+    var themName: String?
 
     static let micFile = "mic.m4a"
     static let systemFile = "system.m4a"
 
     var sortedTurns: [Turn] { turns.sorted { $0.start < $1.start } }
 
+    func label(for speaker: Speaker) -> String {
+        guard speaker == .them,
+              let name = themName?.trimmingCharacters(in: .whitespaces), !name.isEmpty
+        else { return speaker.label }
+        return name
+    }
+
     /// Plain-text transcript, one line per speaker change.
     var transcriptText: String {
         TurnGroup.make(from: sortedTurns.filter { $0.isFinal })
-            .map { "[\(Format.duration($0.start))] \($0.speaker.label): \($0.text)" }
+            .map { "[\(Format.duration($0.start))] \(label(for: $0.speaker)): \($0.text)" }
             .joined(separator: "\n\n")
     }
 }

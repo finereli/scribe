@@ -216,6 +216,12 @@ final class AppModel: ObservableObject {
         store.update(s)
     }
 
+    func setThemName(_ session: Session, to name: String) {
+        guard var s = store.session(session.id) else { return }
+        s.themName = name
+        store.update(s)
+    }
+
     func delete(_ session: Session) {
         guard session.id != liveID else { return }
         let list = store.sessions

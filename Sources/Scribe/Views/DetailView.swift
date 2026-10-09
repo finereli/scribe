@@ -70,6 +70,20 @@ struct DetailView: View {
                     }
                     .help("Click to rename")
             }
+            HStack(spacing: 6) {
+                Text("with")
+                    .foregroundStyle(.secondary)
+                TextField("Them", text: Binding(
+                    get: { session.themName ?? "" },
+                    set: { model.setThemName(session, to: $0) }))
+                    .textFieldStyle(.plain)
+                    .frame(width: 140)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.06)))
+                    .help("Who you were talking to. Replaces \"Them\" in the transcript.")
+            }
+            .font(.system(size: 13))
             Spacer()
             if session.id == model.liveID {
                 HStack(spacing: 6) {
