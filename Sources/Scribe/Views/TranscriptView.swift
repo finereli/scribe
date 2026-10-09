@@ -18,7 +18,7 @@ struct TranscriptView: View {
                             .padding(.top, 40)
                     }
                     ForEach(groups) { group in
-                        GroupRow(group: group, label: session.label(for: group.speaker))
+                        GroupRow(group: group)
                     }
                     Color.clear.frame(height: 1).id("bottom")
                 }
@@ -36,22 +36,19 @@ struct TranscriptView: View {
 
 private struct GroupRow: View {
     let group: TurnGroup
-    let label: String
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 14) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(label)
+                Text(group.speaker.label)
                     .font(.system(size: 12, weight: .bold))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
                     .foregroundStyle(group.speaker == .me ? Color.accentColor : Color.orange)
                 Text(Format.duration(group.start))
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
                     .monospacedDigit()
             }
-            .frame(width: 64, alignment: .leading)
+            .frame(width: 44, alignment: .leading)
 
             paragraph
                 .font(.system(size: 14))
