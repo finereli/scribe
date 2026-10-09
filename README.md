@@ -32,21 +32,23 @@ People who spend their days on calls and don't like taking notes: founders, sale
 
 Until recently the built-in transcription wasn't good enough to be worth keeping. Now it is, at least for what most of us actually do with transcripts: paste them into Claude or ChatGPT and ask "what did they agree to?", "what objections came up?", "write the follow-up email". An AI reading the transcript doesn't need every word to be perfect. It needs the conversation, and it needs it without you having to ask anyone's permission.
 
-## Compared to what I was using
+## Compared to what's out there
 
-I pay for both of these, and both are good at what they do.
+I pay for Fathom and MacWhisper, and both are good at what they do. I tried Granola too.
 
-| | Scribe | Fathom | MacWhisper |
-|---|---|---|---|
-| How it hears the call | On your Mac | A bot joins the call | On your Mac |
-| Works on someone else's meeting without asking | Yes | Only if they let the bot in | Yes |
-| Where your audio goes | Stays on your Mac (English) | Their servers | Stays on your Mac |
-| Transcription engine | Built into macOS | Cloud | Whisper models you download |
-| Load on your Mac | Barely noticeable | None | Heavy, especially with the better models |
-| Summaries and analysis | Paste into your own AI | Built in | Some built in |
-| Price | Free | Free tier, paid plans | Free version, paid Pro |
+| | Scribe | Fathom | Granola | MacWhisper |
+|---|---|---|---|---|
+| How it hears the call | On your Mac | A bot joins the call | On your Mac | On your Mac |
+| Works on someone else's meeting without asking | Yes | Only if they let the bot in | Yes | Yes |
+| Where your audio goes | Stays on your Mac (English) | Their servers | Transcribed in their cloud | Stays on your Mac |
+| Transcription engine | Built into macOS | Cloud | Cloud | Whisper models you download |
+| Load on your Mac | Light | None | Light | Heavy, especially with the better models |
+| Account needed | No | Yes | Yes | No |
+| Summaries and analysis | Paste into your own AI | Built in | Built in | Some built in |
+| Your old transcripts | Files on your disk, forever | In their app | Free plan: last 30 days | Files on your disk |
+| Price | Free and open source | Free tier, paid plans | Free tier, paid from $14/month | Free version, paid Pro |
 
-Fathom is great when you own the meeting and everyone expects a notetaker. MacWhisper is great for transcribing recordings as accurately as possible. Scribe is for the rest of your calls, where you just want a transcript without making it anyone else's business.
+Fathom is great when you own the meeting and everyone expects a notetaker. Granola is great if you want AI-written notes and don't mind the cloud. MacWhisper is great for transcribing recordings as accurately as possible. Scribe is for when you just want the transcript, on your own Mac, without paying for it or making it anyone else's business.
 
 ## Install
 
