@@ -59,6 +59,11 @@ struct CallControls: View {
 
     private var micMenu: some View {
         Menu {
+            modeButton(.call, "Same as Call",
+                       detail: model.devices.name(of: model.devices.callDeviceID))
+            modeButton(.system, "Same as System",
+                       detail: model.devices.name(of: model.devices.defaultInputID))
+            Divider()
             if model.devices.devices.isEmpty {
                 Text("No input devices found")
             }
@@ -66,7 +71,7 @@ struct CallControls: View {
                 Button {
                     model.devices.choose(device)
                 } label: {
-                    if device.id == model.devices.selectedDeviceID {
+                    if model.devices.mode == .fixed && device.id == model.devices.selectedDeviceID {
                         Label(device.name, systemImage: "checkmark")
                     } else {
                         Text(device.name)
@@ -80,7 +85,7 @@ struct CallControls: View {
                 Label("Rescan Devices", systemImage: "arrow.clockwise")
             }
         } label: {
-            pill(icon: "mic.fill", text: (model.devices.selectedDevice?.name ?? "No Input")
+            pill(icon: "mic.fill", text: (model.devices.activeDevice?.name ?? "No Input")
                 .trimmingCharacters(in: .whitespacesAndNewlines))
         }
         .menuStyle(.button)
@@ -89,10 +94,20 @@ struct CallControls: View {
         .frame(maxWidth: .infinity)
         .noFocusRing()
         .pointingHandCursor()
-        .disabled(model.isRecording)
-        .help(model.isRecording
-              ? "Stop recording to change the microphone"
-              : "Choose which microphone is you")
+        .help("Which microphone is you. \"Same as Call\" records the mic your call app is using.")
+    }
+
+    private func modeButton(_ mode: MicMode, _ title: String, detail: String?) -> some View {
+        Button {
+            model.devices.use(mode)
+        } label: {
+            let text = title + (detail.map { " (\($0))" } ?? "")
+            if model.devices.mode == mode {
+                Label(text, systemImage: "checkmark")
+            } else {
+                Text(text)
+            }
+        }
     }
 
     /// Icon pinned left, chevron pinned right, text centered.

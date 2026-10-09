@@ -25,6 +25,14 @@ final class SpeakerStream {
     private var lastLevelSent = Date.distantPast
     private(set) var startOffset: TimeInterval?
 
+    /// When the device last delivered audio. Read by the watchdog on main.
+    var lastBufferAt: Date {
+        get { lock.lock(); defer { lock.unlock() }; return _lastBufferAt }
+        set { lock.lock(); _lastBufferAt = newValue; lock.unlock() }
+    }
+    private var _lastBufferAt = Date()
+    private let lock = NSLock()
+
     init(recognizer: TurnRecognizer, fileURL: URL, callStart: Date) {
         self.recognizer = recognizer
         self.fileURL = fileURL
@@ -56,6 +64,7 @@ final class SpeakerStream {
         guard error == nil, out.frameLength > 0 else { return }
 
         let arrived = Date()
+        lastBufferAt = arrived
         queue.async { self.process(out, arrived: arrived) }
     }
 
@@ -77,6 +86,16 @@ final class SpeakerStream {
                 NSLog("Scribe: couldn't open \(fileURL.lastPathComponent): \(error)")
             }
         }
+        // If the device stopped and was restarted, fill the hole with silence
+        // so a second in the file stays a second of the call.
+        let bufferDuration = Double(buffer.frameLength) / target.sampleRate
+        let expected = arrived.timeIntervalSince(callStart) - bufferDuration
+        let gap = expected - ((startOffset ?? 0) + Double(framesWritten) / target.sampleRate)
+        if gap > 0.5 {
+            Log.write("\(recognizer.speaker.label): filling a \(String(format: "%.1f", gap))s gap")
+            writeSilence(seconds: gap)
+        }
+
         try? file?.write(from: buffer)
 
         let t = (startOffset ?? 0) + Double(framesWritten) / target.sampleRate
@@ -91,6 +110,21 @@ final class SpeakerStream {
             let level = max(0, min(1, (db + 60) / 60))
             DispatchQueue.main.async { self.onLevel?(level) }
         }
+    }
+
+    private func writeSilence(seconds: TimeInterval) {
+        var remaining = AVAudioFrameCount(seconds * target.sampleRate)
+        let chunk: AVAudioFrameCount = 16_000
+        guard let zeros = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: chunk) else { return }
+        while remaining > 0 {
+            let n = min(chunk, remaining)
+            zeros.frameLength = n
+            memset(zeros.floatChannelData![0], 0, Int(n) * MemoryLayout<Float>.size)
+            try? file?.write(from: zeros)
+            framesWritten += Int64(n)
+            remaining -= n
+        }
+        recognizer.finishTurn()
     }
 
     /// Close the file and the turn in progress. Calls back on main once the
