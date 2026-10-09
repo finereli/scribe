@@ -15,7 +15,7 @@ import {
 // Values are copied from site/public/styles.css; departures are commented.
 
 export const FPS = 30;
-export const DURATION = 12 * FPS;
+export const DURATION = 15 * FPS; // hold the end card ~5 s
 
 // Seconds before the site's animation clock starts, so the window registers first.
 const LEAD = 0.4;
