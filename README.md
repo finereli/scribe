@@ -1,3 +1,5 @@
+<img src="logos/export/logo.svg" width="128" alt="Scribe icon">
+
 # Scribe
 
 A free call transcriber for the Mac. It works with Zoom, Google Meet, WhatsApp, FaceTime, or anything else that talks through your speakers, and it doesn't need a bot to join the call.
