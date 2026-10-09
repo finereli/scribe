@@ -18,9 +18,9 @@ People who spend their days on calls and don't like taking notes: founders, sale
 
 **There's no bot.** Nobody gets a "Scribe Notetaker wants to join" message. It doesn't matter whose meeting it is or which app it's in. Scribe listens on your Mac, the same way you do.
 
-**Your audio stays on your Mac.** The recording and the transcript are files on your disk. There's no account and no server of ours. (One caveat, so you know exactly where things go: English is transcribed entirely on your Mac. For Hebrew and Russian, macOS sends the audio to Apple's speech service, the same one dictation uses.)
+**Your audio stays on your Mac.** The recording and the transcript are files on your disk. There's no account and no server. (One caveat: English is transcribed entirely on your Mac. For other languages, macOS sends the audio to Apple's speech service, the same one dictation uses.)
 
-**It's light.** Scribe uses the speech recognizer that's already in macOS rather than shipping its own model. The app is about 2 MB, an hour of call is about 30 MB of audio, and it's quiet when nobody is talking.
+**It's light.** Scribe uses the speech recognizer that's already in macOS rather than shipping its own model. The app is about 2 MB, an hour of call is about 30 MB of audio.
 
 **It knows who said what.** Your microphone is "Me" and whatever comes out of your Mac is "Them". For the usual one-on-one call, that's all the speaker detection you need, and it doesn't have to guess.
 
