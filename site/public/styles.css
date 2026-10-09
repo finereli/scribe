@@ -661,3 +661,7 @@ kbd {
   border: 1px solid var(--line);
   overflow-wrap: anywhere;
 }
+
+/* "Free" tucked inside the download button. */
+.download .free { font-size: 0.72em; font-weight: 500; opacity: 0.75; margin-left: 0.15em; }
+.top nav a.gh { display: inline-flex; align-items: center; }

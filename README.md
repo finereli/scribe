@@ -2,6 +2,8 @@
 
 # Scribe
 
+**[Download Scribe for Mac](https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg)** (free, 1 MB, macOS 14.2+) · [scribe.finereli.com](https://scribe.finereli.com)
+
 A free call transcriber for the Mac. It works with Zoom, Google Meet, WhatsApp, FaceTime, or anything else that talks through your speakers, and it doesn't need a bot to join the call.
 
 ## Why I made this
@@ -52,7 +54,7 @@ Fathom is great when you own the meeting and everyone expects a notetaker. Grano
 
 ## Install
 
-1. Download `Scribe-1.0.0.dmg` from [Releases](https://github.com/finereli/scribe/releases) and drag Scribe to Applications.
+1. [Download Scribe](https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg) and drag it to Applications.
 2. Open it. macOS will ask for three permissions: **Microphone** (your side), **Speech Recognition** (the transcript), and **System Audio Recording** (their side). Allow all three.
 
 Requires macOS 14.2 (Sonoma) or later. Built for both Apple Silicon and Intel Macs.
@@ -66,12 +68,11 @@ Requires macOS 14.2 (Sonoma) or later. Built for both Apple Silicon and Intel Ma
 
 Every call is kept in its own folder (the folder icon opens it) with both sides recorded separately, so you can re-transcribe them later with anything you like.
 
-## Good to know
+## Made for real calls
 
-- **Use headphones.** If the other person comes out of your speakers, your mic hears them too, and some of their words end up under "Me".
-- **When you talk over each other**, one side's words show up a few seconds late. macOS transcribes one stream at a time, so Scribe takes turns. Nothing is lost.
-- **"Them" is everything your Mac plays.** A notification sound or a song during the call gets recorded too.
-- **One language per call.** The built-in recognizer can't switch languages mid-sentence.
+- **Works with any headphones.** AirPods, Bluetooth buds or wired. Scribe records whatever your Mac is using.
+- **Talking over each other is fine.** Each side is recorded as its own stream, so when a laggy connection has you both talking at once, every word from both of you still makes it into the transcript.
+- **English, Hebrew and Russian.** Need another language? [Ask for it](https://github.com/finereli/scribe/issues/new?title=Language%20request%3A%20).
 
 ## Build from source
 
