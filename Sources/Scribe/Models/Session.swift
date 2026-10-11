@@ -37,8 +37,19 @@ struct Session: Identifiable, Codable, Hashable {
     var sortedTurns: [Turn] { turns.sorted { $0.start < $1.start } }
 
     /// Plain-text transcript, one line per speaker change.
+    /// True when only the microphone said anything, e.g. dictating a note
+    /// rather than being on a call.
+    var isSolo: Bool { !turns.contains { $0.speaker == .them && !$0.text.isEmpty } }
+
+    /// Plain-text transcript. Includes the turn still being recognized, so
+    /// copying mid-sentence (or right after stopping) isn't empty. A solo
+    /// recording comes out as plain text, without speaker labels.
     var transcriptText: String {
-        TurnGroup.make(from: sortedTurns.filter { $0.isFinal })
+        let turns = sortedTurns.filter { !$0.text.isEmpty }
+        if isSolo {
+            return turns.map(\.text).joined(separator: " ")
+        }
+        return TurnGroup.make(from: turns)
             .map { "[\(Format.duration($0.start))] \($0.speaker.label): \($0.text)" }
             .joined(separator: "\n\n")
     }

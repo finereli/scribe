@@ -247,11 +247,10 @@ final class AppModel: ObservableObject {
             showToast("Nothing to send yet")
             return
         }
-        let prompt = """
-        Here's the transcript of a call I just had. It was transcribed automatically on my Mac, so some words may be misheard. "Me" is me and "Them" is the other side of the call.
-
-        \(text)
-        """
+        let context = session.isSolo
+            ? "Here's something I just said out loud. It was transcribed automatically on my Mac, so some words may be misheard."
+            : "Here's the transcript of a call I just had. It was transcribed automatically on my Mac, so some words may be misheard. \"Me\" is me and \"Them\" is the other side of the call."
+        let prompt = "\(context)\n\n\(text)"
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(prompt, forType: .string)
