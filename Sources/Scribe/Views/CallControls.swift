@@ -51,10 +51,7 @@ struct CallControls: View {
         .frame(maxWidth: .infinity)
         .noFocusRing()
         .pointingHandCursor()
-        .disabled(model.isRecording)
-        .help(model.isRecording
-              ? "Stop recording to change the language"
-              : "The language of this call")
+        .help("The language being spoken. You can change it mid-call.")
     }
 
     private var micMenu: some View {
@@ -118,7 +115,7 @@ struct CallControls: View {
                 Image(systemName: "chevron.up.chevron.down").font(.system(size: 9, weight: .semibold))
             }
         }
-        .foregroundStyle(model.isRecording ? .secondary : .primary)
+        .foregroundStyle(.primary)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity)

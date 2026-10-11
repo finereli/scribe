@@ -33,8 +33,10 @@ final class RecognitionQueue {
         }
     }
 
-    private let recognizer: SFSpeechRecognizer?
-    private let onDevice: Bool
+    // Replaced when the language changes mid-call; touched only on `queue`
+    // after init.
+    private var recognizer: SFSpeechRecognizer?
+    private var onDevice: Bool
     private let queue = DispatchQueue(label: "com.finereli.scribe.recognition")
     private var jobs: [UUID: Job] = [:]
     private var active: Job?
@@ -71,6 +73,18 @@ final class RecognitionQueue {
             job.ended = true
             job.request?.endAudio()
             if job === self.active { self.watch(job) }
+        }
+    }
+
+    /// Switch languages mid-call. Turns already running finish in the old
+    /// language; turns that start or are still queued use the new one.
+    func setLanguage(_ languageCode: String) {
+        queue.async {
+            let recognizer = SFSpeechRecognizer(locale: Locale(identifier: languageCode))
+            recognizer?.defaultTaskHint = .dictation
+            self.recognizer = recognizer
+            self.onDevice = recognizer?.supportsOnDeviceRecognition ?? false
+            Log.write("recognizer: switched to \(languageCode)")
         }
     }
 

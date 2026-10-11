@@ -127,6 +127,12 @@ final class SpeakerStream {
         recognizer.finishTurn()
     }
 
+    /// End the turn in progress without stopping the capture, so the next
+    /// words start a fresh turn (used when the language changes).
+    func endTurn() {
+        queue.async { self.recognizer.finishTurn() }
+    }
+
     /// Close the file and the turn in progress. Calls back on main once the
     /// last buffer has been written.
     func finish(completion: @escaping () -> Void) {

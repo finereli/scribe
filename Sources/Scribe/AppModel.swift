@@ -42,7 +42,16 @@ final class AppModel: ObservableObject {
     @Published private(set) var systemLevel: Float = 0
 
     @Published var languageCode: String {
-        didSet { UserDefaults.standard.set(languageCode, forKey: "languageCode") }
+        didSet {
+            UserDefaults.standard.set(languageCode, forKey: "languageCode")
+            // Mid-call: switch the recognizer, and record the language the
+            // call ended up in.
+            guard languageCode != oldValue, let recorder, let id = liveID,
+                  var session = store.session(id) else { return }
+            recorder.setLanguage(languageCode)
+            session.languageCode = languageCode
+            store.update(session)
+        }
     }
 
     private var recorder: CallRecorder?

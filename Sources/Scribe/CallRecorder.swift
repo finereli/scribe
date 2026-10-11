@@ -95,6 +95,13 @@ final class CallRecorder {
         }
     }
 
+    /// New words are transcribed in `languageCode` from the next turn on.
+    func setLanguage(_ languageCode: String) {
+        recognition.setLanguage(languageCode)
+        micStream.endTurn()
+        systemStream.endTurn()
+    }
+
     func stop(completion: @escaping () -> Void) {
         watchdog?.invalidate()
         watchdog = nil
