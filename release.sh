@@ -20,7 +20,7 @@ STAGE="$(mktemp -d)/Scribe"
 mkdir -p "$STAGE"
 cp -R Scribe.app "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "Scribe" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+hdiutil create -volname "Scribe $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
 rm -rf "$(dirname "$STAGE")"
 
 codesign --force --timestamp --sign "$DEVELOPER_ID" "$DMG"
@@ -30,6 +30,9 @@ xcrun stapler validate "$DMG"
 
 # A stable name too, so releases/latest/download/Scribe.dmg always works.
 cp "$DMG" Scribe.dmg
+
+# The site links to the versioned file, so downloads carry the version.
+sed -i '' -E "s#releases/(latest/download|download/v[0-9.]+)/Scribe(-[0-9.]+)?\.dmg#releases/download/v$VERSION/$DMG#g; s#Version [0-9.]+\.#Version $VERSION.#" site/public/index.html
 
 echo "Ready: $ZIP $DMG Scribe.dmg"
 echo "Publish: gh release create v$VERSION $DMG $ZIP Scribe.dmg"
