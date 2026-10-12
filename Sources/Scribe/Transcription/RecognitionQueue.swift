@@ -25,6 +25,10 @@ final class RecognitionQueue {
         var request: SFSpeechAudioBufferRecognitionRequest?
         var task: SFSpeechRecognitionTask?
         var turn: Turn
+        /// Text from before the recognizer last started over, and the
+        /// latest result since then. See `handle`.
+        var earlier = ""
+        var latest = ""
 
         init(speaker: Speaker, start: TimeInterval) {
             self.speaker = speaker
@@ -127,9 +131,27 @@ final class RecognitionQueue {
     private func handle(_ job: Job, result: SFSpeechRecognitionResult?, error: Error?) {
         guard jobs[job.id] != nil, !job.turn.isFinal else { return }
         if let result {
-            job.turn.text = result.bestTranscription.formattedString
+            // On-device recognition starts over after a pause inside a turn:
+            // the next result holds only the words since the pause, and the
+            // final one is often empty. Keep what came before, or a turn with
+            // a pause in it loses everything up to its last few words.
+            let text = result.bestTranscription.formattedString
+            if text.isEmpty {
+                // An empty final result: keep what the partials said.
+            } else if Self.startedOver(from: job.latest, to: text) {
+                job.earlier = Self.join(job.earlier, job.latest)
+                job.latest = text
+            } else if Self.repeats(job.earlier, in: text) {
+                // Sometimes it hands back the whole turn again after all.
+                job.earlier = ""
+                job.latest = text
+            } else {
+                job.latest = text
+            }
+            job.turn.text = Self.join(job.earlier, job.latest)
+            if Self.trace { print("TRACE \(job.id.uuidString.prefix(4)) \(result.isFinal ? "F" : "p") [\(job.earlier.split(separator: " ").count)] \(text)") }
             if let last = result.bestTranscription.segments.last {
-                job.turn.end = job.start + last.timestamp + last.duration
+                job.turn.end = max(job.turn.end, job.start + last.timestamp + last.duration)
             }
             if result.isFinal { finish(job) } else { emit(job.turn) }
         } else if let error {
@@ -142,6 +164,37 @@ final class RecognitionQueue {
             }
             finish(job)
         }
+    }
+
+    /// A result that isn't a revision of the previous one: it lost several
+    /// words, or it's shorter and begins differently. Revisions touch the
+    /// last word or two, and early on the first word ("I think" becoming
+    /// "Think"), hence the three-word minimum for the second test.
+    static func startedOver(from previous: String, to text: String) -> Bool {
+        let before = previous.split(separator: " ")
+        let after = text.split(separator: " ")
+        guard !before.isEmpty, after.count < before.count else { return false }
+        if after.count + 3 < before.count { return true }
+        let first = { (w: Substring?) in w.map { $0.lowercased().filter(\.isLetter) } }
+        return before.count >= 3 && first(before.first) != first(after.first)
+    }
+
+    /// Whether `text` starts with the same words as `earlier`, meaning the
+    /// recognizer is returning the whole turn again.
+    static func repeats(_ earlier: String, in text: String) -> Bool {
+        let a = words(earlier), b = words(text)
+        let n = min(a.count, 4)
+        return n > 0 && b.count >= a.count && Array(b.prefix(n)) == Array(a.prefix(n))
+    }
+
+    private static func words(_ s: String) -> [String] {
+        s.split(separator: " ").map { $0.lowercased().filter { $0.isLetter || $0.isNumber } }
+    }
+
+    private static let trace = ProcessInfo.processInfo.environment["SCRIBE_TRACE"] != nil
+
+    static func join(_ a: String, _ b: String) -> String {
+        a.isEmpty ? b : b.isEmpty ? a : a + " " + b
     }
 
     private func finish(_ job: Job) {

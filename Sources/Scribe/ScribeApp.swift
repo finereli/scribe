@@ -1,6 +1,18 @@
 import SwiftUI
 
 @main
+enum Entry {
+    static func main() {
+        let args = ProcessInfo.processInfo.arguments
+        if let i = args.firstIndex(of: "--replay"), i + 1 < args.count {
+            Replay.run(folder: URL(fileURLWithPath: args[i + 1]),
+                       speed: i + 2 < args.count ? Double(args[i + 2]) ?? 4 : 4)
+        } else {
+            ScribeApp.main()
+        }
+    }
+}
+
 struct ScribeApp: App {
     @StateObject private var model = AppModel()
 
