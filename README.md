@@ -2,9 +2,9 @@
 
 # Scribe
 
-**[Download Scribe for Mac](https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg)** (free, 1 MB, macOS 14.2+) · [scribe.finereli.com](https://scribe.finereli.com)
+**[Download Scribe for Mac](https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg)** (free, 1 MB download, macOS 14.2+, signed and notarized by Apple; [all releases](https://github.com/finereli/scribe/releases)) · [scribe.finereli.com](https://scribe.finereli.com)
 
-A tiny Mac tool to transcribe your calls and paste them into Claude or ChatGPT. It listens to your Zoom, Meet or WhatsApp call from your side, so no bot joins, writes down who said what, and hands the transcript to your AI with one click. 2 MB, no dependencies, no account, free.
+A tiny Mac tool to transcribe your calls and paste them into Claude or ChatGPT. It listens to your Zoom, Meet, Teams or WhatsApp call from your side, so no bot joins, writes down who said what, and hands the transcript to your AI with one click. 2 MB, no dependencies, no account, free.
 
 ## Why I made this
 
@@ -91,7 +91,7 @@ Scribe is a small SwiftPM app with no dependencies.
 open Scribe.app
 ```
 
-`SIGN=1 ./build.sh` signs it with a Developer ID, and `NOTARIZE=1 ./build.sh` also notarizes it.
+The download on the releases page is already signed and notarized. To build your own, `SIGN=1 ./build.sh` signs it with a Developer ID, and `NOTARIZE=1 ./build.sh` also notarizes it.
 
 ## License
 
