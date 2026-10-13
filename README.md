@@ -30,7 +30,7 @@ People who spend their days on calls and don't like taking notes: founders, sale
 
 **Your audio stays on your Mac.** Both sides are saved as audio files on your disk, next to the transcript. There's no account and no server. (One caveat: English is transcribed entirely on your Mac. For other languages, macOS sends the audio to Apple's speech service, the same one dictation uses.)
 
-**It knows who said what.** Your microphone is "Me" and whatever comes out of your Mac is "Them". For the usual one-on-one call, that's all the speaker detection you need, and it doesn't have to guess.
+**It knows who said what.** Your microphone is "Me" and whatever comes out of your Mac is "Them". For the usual one-on-one call, that's all the speaker detection you need, and it doesn't have to guess. If several people are on the other side, they're all Them.
 
 **It's free and open source.** MIT licensed, small enough to read before you trust it with your audio, and easy to change if you want it to do something it doesn't.
 
@@ -76,6 +76,8 @@ Every call is kept in its own folder (the folder icon opens it) with both sides 
 
 ## Made for real calls
 
+- **Works with any calling app.** Scribe records your microphone and whatever your Mac plays, so Zoom, Google Meet, Microsoft Teams, WhatsApp desktop, FaceTime and Slack all work, in the app or the browser.
+- **Nothing lost if it crashes.** Each sentence is saved the moment it's recognized, and both audio tracks are written to disk as the call goes.
 - **Works with any headphones.** AirPods, Bluetooth buds or wired. Scribe records whatever your Mac is using.
 - **Talking over each other is fine.** Each side is recorded as its own stream, so when a laggy connection has you both talking at once, every word from both of you still makes it into the transcript.
 - **English, Hebrew and Russian.** Need another language? [Ask for it](https://github.com/finereli/scribe/issues/new?title=Language%20request%3A%20).

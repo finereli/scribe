@@ -594,6 +594,15 @@ kbd {
 .caveats b { display: block; font-family: var(--rounded); font-size: 1.125rem; margin-bottom: 4px; }
 .caveats span { color: var(--muted); }
 
+/* ---------- questions ---------- */
+
+.faq { margin: 0; max-width: 46rem; }
+.faq > div { padding: 18px 0; border-bottom: 1px solid var(--line); }
+.faq > div:first-child { padding-top: 0; }
+.faq > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.faq dt { font-family: var(--rounded); font-weight: 700; font-size: 1.125rem; line-height: 1.3; margin-bottom: 6px; }
+.faq dd { margin: 0; color: var(--muted); }
+
 /* ---------- install and use ---------- */
 
 .howto {
