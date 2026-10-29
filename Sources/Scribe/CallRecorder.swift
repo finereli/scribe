@@ -11,8 +11,8 @@ final class CallRecorder {
     private let mic = MicCapture()
     private let system = SystemAudioCapture()
 
-    init(folder: URL, languageCode: String, start: Date) {
-        let recognition = RecognitionQueue(languageCode: languageCode)
+    init(folder: URL, start: Date) {
+        let recognition = RecognitionQueue()
         self.recognition = recognition
         micStream = SpeakerStream(
             recognizer: TurnRecognizer(speaker: .me, recognition: recognition),
@@ -116,13 +116,6 @@ final class CallRecorder {
             }
             DispatchQueue.main.async { self.restarting = false }
         }
-    }
-
-    /// New words are transcribed in `languageCode` from the next turn on.
-    func setLanguage(_ languageCode: String) {
-        recognition.setLanguage(languageCode)
-        micStream.endTurn()
-        systemStream.endTurn()
     }
 
     func stop(completion: @escaping () -> Void) {

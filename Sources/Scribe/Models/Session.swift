@@ -24,12 +24,17 @@ struct Session: Identifiable, Codable, Hashable {
     var title: String
     var createdAt: Date
     var duration: TimeInterval
+    /// The language picked for calls transcribed by macOS. Empty since
+    /// Scribe went online: OpenAI detects the language itself.
     var languageCode: String
     var turns: [Turn]
     /// Where each track's first sample sits on the call timeline, so the two
     /// files can be lined up again when re-transcribing.
     var micOffset: TimeInterval?
     var systemOffset: TimeInterval?
+    /// Turns that couldn't be transcribed (no key, offline too long). Their
+    /// audio is in the recordings, so transcribing again fills them in.
+    var missingTurns: Int?
 
     static let micFile = "mic.m4a"
     static let systemFile = "system.m4a"

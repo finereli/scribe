@@ -51,7 +51,6 @@ struct SessionRow: View {
             }
             HStack(spacing: 6) {
                 Text(Format.time(session.createdAt))
-                Text(CallLanguage.name(for: session.languageCode))
                 Spacer()
                 Text(Format.duration(live ? model.elapsed : session.duration))
                     .monospacedDigit()

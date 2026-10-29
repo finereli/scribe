@@ -33,6 +33,12 @@ extension View {
 /// which language was selected.
 enum TextDirection {
     static func isRTL(_ text: String) -> Bool {
+        direction(text) ?? false
+    }
+
+    /// true for right-to-left, false for left-to-right, nil when the text
+    /// has no letters to go by ("OK" has, "123." hasn't).
+    static func direction(_ text: String) -> Bool? {
         for scalar in text.unicodeScalars {
             let v = scalar.value
             // Strong RTL: Hebrew, Arabic, Syriac, Thaana, and their
@@ -55,6 +61,24 @@ enum TextDirection {
                 return false
             }
         }
-        return false
+        return nil
+    }
+
+    /// Splits text after sentence-ending punctuation, keeping it.
+    static func sentences(_ text: String) -> [String] {
+        var out: [String] = []
+        var current = ""
+        var previous: Character?
+        for ch in text {
+            if ch == " ", let p = previous, ".?!…".contains(p), !current.isEmpty {
+                out.append(current)
+                current = ""
+            } else {
+                current.append(ch)
+            }
+            previous = ch
+        }
+        if !current.isEmpty { out.append(current) }
+        return out
     }
 }

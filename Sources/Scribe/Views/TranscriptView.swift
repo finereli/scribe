@@ -5,6 +5,7 @@ import SwiftUI
 struct TranscriptView: View {
     let session: Session
     let live: Bool
+    var transcribing = false
 
     var body: some View {
         let groups = TurnGroup.make(from: session.sortedTurns)
@@ -12,7 +13,7 @@ struct TranscriptView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {
                     if groups.isEmpty {
-                        Text(live ? "Listening…" : "Nothing was transcribed.")
+                        Text(live ? "Listening…" : transcribing ? "" : "Nothing was transcribed.")
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 40)
@@ -50,24 +51,47 @@ private struct GroupRow: View {
             }
             .frame(width: 44, alignment: .leading)
 
-            paragraph
-                .font(.system(size: 14))
-                .lineSpacing(3)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .multilineTextAlignment(.leading)
-                .environment(\.layoutDirection,
-                             TextDirection.isRTL(group.text) ? .rightToLeft : .leftToRight)
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(Array(runs.enumerated()), id: \.offset) { _, run in
+                    text(of: run)
+                        .font(.system(size: 14))
+                        .lineSpacing(3)
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
+                        .environment(\.layoutDirection, run.rtl ? .rightToLeft : .leftToRight)
+                }
+            }
         }
     }
 
+    /// Sentences in a row that read the same way. A speaker who moves
+    /// between Hebrew and English gets a new block at each switch, so each
+    /// reads in its own direction with its punctuation on the right side.
+    private struct Run {
+        var rtl: Bool
+        var pieces: [(text: String, isFinal: Bool)] = []
+    }
+
+    private var runs: [Run] {
+        var runs: [Run] = []
+        for turn in group.turns {
+            for sentence in TextDirection.sentences(turn.text) {
+                let rtl = TextDirection.direction(sentence) ?? runs.last?.rtl
+                    ?? TextDirection.isRTL(group.text)
+                if runs.last?.rtl != rtl { runs.append(Run(rtl: rtl)) }
+                runs[runs.count - 1].pieces.append((sentence, turn.isFinal))
+            }
+        }
+        return runs
+    }
+
     /// Final turns in full color, the turn still forming dimmed.
-    private var paragraph: Text {
-        group.turns.enumerated().reduce(Text("")) { text, item in
-            let (i, turn) = item
-            let piece = Text((i > 0 ? " " : "") + turn.text)
-                .foregroundColor(turn.isFinal ? .primary : .secondary)
-            return text + piece
+    private func text(of run: Run) -> Text {
+        run.pieces.enumerated().reduce(Text("")) { text, item in
+            let (i, piece) = item
+            return text + Text((i > 0 ? " " : "") + piece.text)
+                .foregroundColor(piece.isFinal ? .primary : .secondary)
         }
     }
 }

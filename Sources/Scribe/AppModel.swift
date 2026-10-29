@@ -3,23 +3,6 @@ import AppKit
 import AVFoundation
 import Combine
 
-/// The languages Scribe offers. Switchable mid-call; it applies from the
-/// next turn on.
-struct CallLanguage: Identifiable, Hashable {
-    let id: String
-    let name: String
-
-    static let all = [
-        CallLanguage(id: "en-US", name: "English"),
-        CallLanguage(id: "he-IL", name: "Hebrew"),
-        CallLanguage(id: "ru-RU", name: "Russian"),
-    ]
-
-    static func name(for code: String) -> String {
-        all.first { $0.id == code }?.name ?? code
-    }
-}
-
 @MainActor
 final class AppModel: ObservableObject {
     let store = SessionStore()
@@ -29,6 +12,13 @@ final class AppModel: ObservableObject {
     @Published var errorMessage: String? {
         didSet { if let errorMessage { Log.write("error: \(errorMessage)") } }
     }
+    /// What we know about the OpenAI key. See AppModel+Transcription.
+    @Published var keyState: KeyState
+    /// Turns are waiting for the network to come back.
+    @Published var offline = false
+    /// Saved calls being transcribed again, with their progress.
+    @Published var transcribing: [Session.ID: TranscribeProgress] = [:]
+    var retranscribers: [Session.ID: Retranscriber] = [:]
     /// Non-fatal trouble during a call, shown under the transcript.
     @Published var notice: String?
     /// A brief confirmation ("Transcript copied") that fades on its own.
@@ -40,19 +30,6 @@ final class AppModel: ObservableObject {
     @Published private(set) var micLevel: Float = 0
     @Published private(set) var systemLevel: Float = 0
 
-    @Published var languageCode: String {
-        didSet {
-            UserDefaults.standard.set(languageCode, forKey: "languageCode")
-            // Mid-call: switch the recognizer, and record the language the
-            // call ended up in.
-            guard languageCode != oldValue, let recorder, let id = liveID,
-                  var session = store.session(id) else { return }
-            recorder.setLanguage(languageCode)
-            session.languageCode = languageCode
-            store.update(session)
-        }
-    }
-
     private var recorder: CallRecorder?
     private var liveStart: Date?
     private var timer: Timer?
@@ -60,9 +37,10 @@ final class AppModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
-        languageCode = UserDefaults.standard.string(forKey: "languageCode") ?? "en-US"
+        keyState = APIKey.current == nil ? .missing : .unchecked
         selection = store.sessions.first?.id
         AVCaptureDevice.requestAccess(for: .audio) { _ in }
+        if keyState == .unchecked { Task { await self.checkStoredKey() } }
 
         for child in [store.objectWillChange, devices.objectWillChange] {
             child.sink { [weak self] _ in self?.objectWillChange.send() }
@@ -96,7 +74,7 @@ final class AppModel: ObservableObject {
 
     func start() {
         guard !isRecording else { return }
-        Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) device=\(devices.activeDevice?.name ?? "none") follows=\(devices.followsDefault) lang=\(languageCode)")
+        Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) device=\(devices.activeDevice?.name ?? "none") follows=\(devices.followsDefault)")
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .denied, .restricted:
             errorMessage = "Microphone access is off. Turn it on in System Settings ▸ Privacy & Security ▸ Microphone."
@@ -108,24 +86,24 @@ final class AppModel: ObservableObject {
             return
         default: break
         }
-        guard APIKey.openAI != nil else {
-            errorMessage = APIKey.missingMessage
-            return
-        }
+        // Without a working key the call is still recorded, and can be
+        // transcribed once the key is sorted out. The banner says so.
 
         let now = Date()
         let session = Session(id: UUID(), title: Self.defaultTitle(now), createdAt: now,
-                              duration: 0, languageCode: languageCode, turns: [])
+                              duration: 0, languageCode: "", turns: [])
         store.add(session)
 
-        let recorder = CallRecorder(folder: store.folder(for: session.id),
-                                    languageCode: languageCode, start: now)
+        let recorder = CallRecorder(folder: store.folder(for: session.id), start: now)
         // These callbacks all arrive on the main queue.
         recorder.recognition.onUpdate = { [weak self] turn in
             MainActor.assumeIsolated { self?.apply(turn, to: session.id) }
         }
-        recorder.recognition.onError = { [weak self] message in
-            MainActor.assumeIsolated { self?.notice = message }
+        recorder.recognition.onFailed = { [weak self] turn in
+            MainActor.assumeIsolated { self?.markMissing(turn, in: session.id) }
+        }
+        recorder.recognition.onStatus = { [weak self] problem in
+            MainActor.assumeIsolated { self?.transcriptionStatus(problem) }
         }
         recorder.micStream.onLevel = { [weak self] level in
             MainActor.assumeIsolated { self?.micLevel = level }
@@ -180,6 +158,11 @@ final class AppModel: ObservableObject {
                 session.systemOffset = recorder.systemStream.startOffset
                 self.store.update(session)
             }
+            // Turns can still be retrying after the call ends. Once they're
+            // all in, there's nothing left to be offline for.
+            recorder.recognition.drain { [weak self] in
+                MainActor.assumeIsolated { if self?.isRecording == false { self?.offline = false } }
+            }
         }
     }
 
@@ -218,6 +201,7 @@ final class AppModel: ObservableObject {
 
     func delete(_ session: Session) {
         guard session.id != liveID else { return }
+        cancelTranscribing(session)
         let list = store.sessions
         let idx = list.firstIndex { $0.id == session.id }
         store.delete(session)
@@ -248,8 +232,8 @@ final class AppModel: ObservableObject {
             return
         }
         let context = session.isSolo
-            ? "Here's something I just said out loud. It was transcribed automatically on my Mac, so some words may be misheard."
-            : "Here's the transcript of a call I just had. It was transcribed automatically on my Mac, so some words may be misheard. \"Me\" is me and \"Them\" is the other side of the call."
+            ? "Here's something I just said out loud. It was transcribed automatically, so some words may be misheard."
+            : "Here's the transcript of a call I just had. It was transcribed automatically, so some words may be misheard. \"Me\" is me and \"Them\" is the other side of the call."
         let prompt = "\(context)\n\n\(text)"
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()

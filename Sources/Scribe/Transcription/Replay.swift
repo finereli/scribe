@@ -11,8 +11,7 @@ enum Replay {
         decoder.dateDecodingStrategy = .iso8601
         let session = try? decoder.decode(
             Session.self, from: Data(contentsOf: folder.appendingPathComponent("session.json")))
-        let language = session?.languageCode ?? "en-US"
-        let recognition = RecognitionQueue(languageCode: language)
+        let recognition = RecognitionQueue()
         var turns: [UUID: Turn] = [:]
         var lastUpdate = Date()
         recognition.onUpdate = { turns[$0.id] = $0; lastUpdate = Date() }
@@ -25,7 +24,7 @@ enum Replay {
             guard let file = try? AVAudioFile(forReading: folder.appendingPathComponent(name)) else { return nil }
             return (TurnRecognizer(speaker: speaker, recognition: recognition), file, offset)
         }
-        print("replaying \(folder.lastPathComponent) (\(language)) at \(speed)x")
+        print("replaying \(folder.lastPathComponent) at \(speed)x")
 
         var fed = false
         DispatchQueue.global().async {

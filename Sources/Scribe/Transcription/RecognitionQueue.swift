@@ -1,61 +1,86 @@
 import Foundation
 import AVFoundation
 
-/// Transcribes turns with OpenAI's gpt-transcribe, one upload per turn.
+/// Transcribes turns with OpenAI, one upload per turn.
 ///
 /// A turn's audio is collected while the person talks. When the turn ends it
 /// goes up as a small WAV and its text comes back a second or two later.
-/// Turns upload in parallel and land in any order; each carries its own start
-/// time, so the transcript sorts itself. The Mac does nothing but record.
-final class RecognitionQueue {
-    /// Called on the main queue for every partial and final result.
+/// Turns upload in parallel (a few at a time) and land in any order; each
+/// carries its own start time, so the transcript sorts itself. The Mac does
+/// nothing but record. No language is set: OpenAI works it out for each
+/// turn, so a call can move between languages freely.
+///
+/// When a turn can't be transcribed its audio is still in the recording, so
+/// the call can be transcribed again later. What can go wrong:
+/// - No key, or a key OpenAI rejects: fail at once, and keep failing fast
+///   until the key changes.
+/// - Out of credit: fail, and don't try again for a minute.
+/// - Rate limits and server errors: retry with backoff.
+/// - Offline: keep retrying for a few minutes, so a dropped connection
+///   catches up instead of losing turns.
+final class RecognitionQueue: @unchecked Sendable {
+    /// Called on main for every partial and final result.
     var onUpdate: ((Turn) -> Void)?
-    /// Called on the main queue for errors worth showing.
-    var onError: ((String) -> Void)?
+    /// Called on main for a turn that couldn't be transcribed.
+    var onFailed: ((Turn) -> Void)?
+    /// Called on main with a problem, or nil once a turn goes through.
+    var onStatus: ((TranscriptionProblem?) -> Void)?
+    /// Called on main with turns finished and turns started so far.
+    var onProgress: ((Int, Int) -> Void)?
 
-    static let model = "gpt-transcribe"
-    private static let sampleRate = 16_000.0
-
-    private final class Job {
+    private final class Job: @unchecked Sendable {
         let id = UUID()
         let speaker: Speaker
         let start: TimeInterval
-        var language = ""
         var samples: [Float] = []
+        var prompt = ""
+        var attempt = 0
+        var offlineSince: Date?
 
         init(speaker: Speaker, start: TimeInterval) {
             self.speaker = speaker
             self.start = start
         }
+
+        var turn: Turn {
+            Turn(id: id, speaker: speaker, start: start,
+                 end: start + Double(samples.count) / WAV.sampleRate, text: "", isFinal: true)
+        }
     }
 
     // Touched only on `queue`.
     private let queue = DispatchQueue(label: "com.finereli.scribe.recognition")
-    private var jobs: [UUID: Job] = [:]
-    private var language: String
-    /// The last few words transcribed, passed as the prompt so a turn that
-    /// starts mid-thought has context.
+    private var open: [UUID: Job] = [:]
+    private var waiting: [Job] = []
+    private var running = 0
+    private var retrying = 0
+    private var started = 0
+    private var finished = 0
+    /// The last words transcribed, sent as the prompt so a turn that starts
+    /// mid-thought has context.
     private var context = ""
     private var cancelled = false
-    private let session: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        return URLSession(configuration: config)
-    }()
+    private var drainWaiters: [() -> Void] = []
+    /// A key OpenAI turned down, and why. Turns fail fast until it changes.
+    private var refused: (key: String, problem: TranscriptionProblem, until: Date)?
 
-    init(languageCode: String) {
-        language = Self.isoCode(languageCode)
-    }
+    private let maxUploads = 6
+    private let offlinePatience: TimeInterval = 180
 
     // MARK: - Turns (any thread)
 
     func begin(speaker: Speaker, at start: TimeInterval) -> UUID {
         let job = Job(speaker: speaker, start: start)
         queue.async {
-            job.language = self.language
-            self.jobs[job.id] = job
-            // Show that this speaker is talking until the text arrives.
-            self.emit(Turn(id: job.id, speaker: speaker, start: start, end: start, text: "…", isFinal: false))
+            guard !self.cancelled else { return }
+            self.open[job.id] = job
+            self.started += 1
+            self.progress()
+            // Show that this speaker is talking until the text arrives, unless
+            // it's already clear no text is coming.
+            if self.blocker() == nil {
+                self.emit(Turn(id: job.id, speaker: speaker, start: start, end: start, text: "…", isFinal: false))
+            }
         }
         return job.id
     }
@@ -63,147 +88,152 @@ final class RecognitionQueue {
     func append(_ buffer: AVAudioPCMBuffer, to id: UUID) {
         guard let channel = buffer.floatChannelData?[0] else { return }
         let samples = Array(UnsafeBufferPointer(start: channel, count: Int(buffer.frameLength)))
-        queue.async { self.jobs[id]?.samples += samples }
+        queue.async { self.open[id]?.samples += samples }
     }
 
     func end(_ id: UUID) {
         queue.async {
-            guard let job = self.jobs.removeValue(forKey: id) else { return }
-            self.upload(job, prompt: self.context)
-        }
-    }
-
-    /// Turns already running finish in the old language; turns that start
-    /// after this use the new one.
-    func setLanguage(_ languageCode: String) {
-        queue.async {
-            self.language = Self.isoCode(languageCode)
-            Log.write("recognizer: switched to \(languageCode)")
+            guard !self.cancelled, let job = self.open.removeValue(forKey: id) else { return }
+            job.prompt = self.context
+            self.waiting.append(job)
+            self.pump()
         }
     }
 
     func cancelAll() {
         queue.async {
             self.cancelled = true
-            self.jobs = [:]
+            self.open = [:]
+            self.waiting = []
+            self.checkDrained()
         }
     }
 
-    // MARK: - Uploading
-
-    private func upload(_ job: Job, prompt: String, attempt: Int = 1) {
-        let duration = Double(job.samples.count) / Self.sampleRate
-        var turn = Turn(id: job.id, speaker: job.speaker, start: job.start,
-                        end: job.start + duration, text: "", isFinal: true)
-        guard let key = APIKey.openAI else {
-            DispatchQueue.main.async { self.onError?(APIKey.missingMessage) }
-            emit(turn)
-            return
+    /// Calls back on main once every turn begun so far is transcribed or has
+    /// failed. Turns still open count, so end them first.
+    func drain(_ completion: @escaping () -> Void) {
+        queue.async {
+            self.drainWaiters.append(completion)
+            self.checkDrained()
         }
-        let request = Self.request(wav: Self.wav(job.samples), language: job.language,
-                                   prompt: prompt, key: key)
-        let sent = Date()
-        session.dataTask(with: request) { data, response, error in
-            self.queue.async {
-                guard !self.cancelled else { return }
-                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-                if error == nil, status == 200, let data {
-                    turn.text = String(decoding: data, as: UTF8.self)
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !turn.text.isEmpty {
-                        self.context = String((self.context + " " + turn.text).suffix(200))
-                    }
-                    Log.write(String(format: "recognizer %@: %.1fs of audio in %.1fs",
-                                     job.speaker.label, duration, Date().timeIntervalSince(sent)))
-                    self.emit(turn)
-                    return
-                }
-                let reason = error?.localizedDescription
-                    ?? data.map { Self.errorMessage($0) } ?? "HTTP \(status)"
-                Log.write("recognizer \(job.speaker.label): attempt \(attempt) failed: \(reason)")
-                // Network trouble, rate limits and server errors are worth
-                // another try; a bad key or request isn't.
-                let retryable = error != nil || status == 429 || status >= 500
-                if retryable && attempt < 4 {
-                    self.queue.asyncAfter(deadline: .now() + Double(attempt * attempt)) {
-                        self.upload(job, prompt: prompt, attempt: attempt + 1)
-                    }
-                } else {
-                    DispatchQueue.main.async { self.onError?("\(job.speaker.label): couldn't transcribe (\(reason))") }
-                    self.emit(turn)
+    }
+
+    // MARK: - Uploading (on queue)
+
+    private func pump() {
+        while running < maxUploads, !waiting.isEmpty, !cancelled {
+            let job = waiting.removeFirst()
+            if let problem = blocker() {
+                fail(job, problem: problem, reason: "skipped")
+                continue
+            }
+            guard let key = APIKey.current else {
+                fail(job, problem: .noKey, reason: "no key")
+                continue
+            }
+            running += 1
+            job.attempt += 1
+            let wav = WAV.encode(job.samples)
+            let sent = Date()
+            Task {
+                let outcome = await OpenAI.transcribe(wav: wav, prompt: job.prompt, key: key)
+                self.queue.async {
+                    self.running -= 1
+                    self.handle(outcome, for: job, key: key, sent: sent)
+                    self.pump()
                 }
             }
-        }.resume()
-    }
-
-    private static func request(wav: Data, language: String, prompt: String, key: String) -> URLRequest {
-        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/audio/transcriptions")!)
-        request.httpMethod = "POST"
-        let boundary = "scribe-\(UUID().uuidString)"
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
-        var body = Data()
-        func field(_ name: String, _ value: String) {
-            body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n")
         }
-        field("model", model)
-        field("response_format", "text")
-        if !language.isEmpty { field("language", language) }
-        if !prompt.isEmpty { field("prompt", prompt) }
-        body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"turn.wav\"\r\nContent-Type: audio/wav\r\n\r\n")
-        body.append(wav)
-        body.append("\r\n--\(boundary)--\r\n")
-        request.httpBody = body
-        return request
+        checkDrained()
     }
 
-    /// 16 kHz mono 16-bit WAV: 32 KB a second, so a 30-second turn is about 1 MB.
-    static func wav(_ samples: [Float]) -> Data {
-        var data = Data()
-        func put<T: FixedWidthInteger>(_ v: T) { withUnsafeBytes(of: v.littleEndian) { data.append(contentsOf: $0) } }
-        let bytes = UInt32(samples.count * 2)
-        data.append("RIFF"); put(36 + bytes); data.append("WAVE")
-        data.append("fmt "); put(UInt32(16)); put(UInt16(1)); put(UInt16(1))
-        put(UInt32(sampleRate)); put(UInt32(sampleRate * 2)); put(UInt16(2)); put(UInt16(16))
-        data.append("data"); put(bytes)
-        data.reserveCapacity(data.count + Int(bytes))
-        for s in samples { put(Int16(max(-1, min(1, s)) * Float(Int16.max))) }
-        return data
+    private func handle(_ outcome: OpenAI.Outcome, for job: Job, key: String, sent: Date) {
+        guard !cancelled else { return }
+        let label = job.speaker.label
+        switch outcome {
+        case .text(let text):
+            var turn = job.turn
+            turn.text = text
+            if !text.isEmpty { context = String((context + " " + text).suffix(200)) }
+            Log.write(String(format: "recognizer %@: %.1fs of audio in %.1fs", label,
+                             turn.end - turn.start, Date().timeIntervalSince(sent)))
+            refused = nil
+            finished += 1
+            emit(turn)
+            status(nil)
+            progress()
+        case .rejected(let message):
+            refused = (key, .rejected(message), .distantFuture)
+            fail(job, problem: .rejected(message), reason: message)
+        case .noCredit:
+            refused = (key, .noCredit, Date().addingTimeInterval(60))
+            fail(job, problem: .noCredit, reason: "out of credit")
+        case .busy(let reason):
+            Log.write("recognizer \(label): attempt \(job.attempt) busy: \(reason)")
+            if job.attempt < 6 {
+                retry(job, after: min(30, pow(2, Double(job.attempt))))
+            } else {
+                fail(job, problem: nil, reason: reason)
+            }
+        case .offline(let reason):
+            Log.write("recognizer \(label): attempt \(job.attempt) offline: \(reason)")
+            let since = job.offlineSince ?? Date()
+            job.offlineSince = since
+            status(.offline)
+            if Date().timeIntervalSince(since) < offlinePatience {
+                retry(job, after: 5)
+            } else {
+                fail(job, problem: nil, reason: "offline for \(Int(offlinePatience))s")
+            }
+        case .failed(let reason):
+            fail(job, problem: nil, reason: reason)
+        }
     }
 
-    private static func errorMessage(_ data: Data) -> String {
-        struct Body: Decodable { struct E: Decodable { let message: String }; let error: E }
-        return (try? JSONDecoder().decode(Body.self, from: data))?.error.message
-            ?? String(decoding: data.prefix(200), as: UTF8.self)
+    private func retry(_ job: Job, after delay: TimeInterval) {
+        retrying += 1
+        queue.asyncAfter(deadline: .now() + delay) {
+            self.retrying -= 1
+            guard !self.cancelled else { return self.checkDrained() }
+            self.waiting.insert(job, at: 0)
+            self.pump()
+        }
     }
 
-    /// "he-IL" to "he", the form the API takes.
-    private static func isoCode(_ languageCode: String) -> String {
-        String(languageCode.prefix { $0 != "-" && $0 != "_" })
+    private func fail(_ job: Job, problem: TranscriptionProblem?, reason: String) {
+        Log.write("recognizer \(job.speaker.label): turn at \(Format.duration(job.start)) not transcribed: \(reason)")
+        finished += 1
+        let turn = job.turn
+        DispatchQueue.main.async { self.onFailed?(turn) }
+        if let problem { status(problem) }
+        progress()
+    }
+
+    /// Why a turn would fail before it's sent, if it would.
+    private func blocker() -> TranscriptionProblem? {
+        guard let key = APIKey.current else { return .noKey }
+        guard let refused, refused.key == key, Date() < refused.until else { return nil }
+        return refused.problem
+    }
+
+    private func checkDrained() {
+        let idle = running == 0 && retrying == 0 && (cancelled || (open.isEmpty && waiting.isEmpty))
+        guard idle, !drainWaiters.isEmpty else { return }
+        let waiters = drainWaiters
+        drainWaiters = []
+        DispatchQueue.main.async { waiters.forEach { $0() } }
+    }
+
+    private func status(_ problem: TranscriptionProblem?) {
+        DispatchQueue.main.async { self.onStatus?(problem) }
+    }
+
+    private func progress() {
+        let (done, total) = (finished, started)
+        DispatchQueue.main.async { self.onProgress?(done, total) }
     }
 
     private func emit(_ turn: Turn) {
         DispatchQueue.main.async { self.onUpdate?(turn) }
     }
-}
-
-private extension Data {
-    mutating func append(_ string: String) { append(Data(string.utf8)) }
-}
-
-/// The OpenAI key, from OPENAI_API_KEY or ~/.config/scribe/openai-key.
-/// A plain file rather than the Keychain so the same setup works on Linux.
-enum APIKey {
-    static let file = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent(".config/scribe/openai-key")
-
-    static var openAI: String? {
-        if let env = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !env.isEmpty { return env }
-        let key = (try? String(contentsOf: file, encoding: .utf8))?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return key?.isEmpty == false ? key : nil
-    }
-
-    static let missingMessage = "No OpenAI API key. Put it in ~/.config/scribe/openai-key."
 }

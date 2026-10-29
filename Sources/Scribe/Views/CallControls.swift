@@ -1,13 +1,12 @@
 import SwiftUI
 
-/// Language and microphone pickers plus a level meter per speaker, so you
+/// The microphone picker plus a level meter per speaker, so you
 /// can see both sides are coming through before the call gets going.
 struct CallControls: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
         VStack(spacing: 8) {
-            languageMenu
             micMenu
             VStack(spacing: 5) {
                 meterRow("Me", level: model.micLevel)
@@ -27,31 +26,6 @@ struct CallControls: View {
             LevelMeter(level: level, active: model.isRecording)
                 .frame(height: 6)
         }
-    }
-
-    private var languageMenu: some View {
-        Menu {
-            ForEach(CallLanguage.all) { lang in
-                Button {
-                    model.languageCode = lang.id
-                } label: {
-                    if lang.id == model.languageCode {
-                        Label(lang.name, systemImage: "checkmark")
-                    } else {
-                        Text(lang.name)
-                    }
-                }
-            }
-        } label: {
-            pill(icon: "globe", text: CallLanguage.name(for: model.languageCode))
-        }
-        .menuStyle(.button)
-        .buttonStyle(.plain)
-        .menuIndicator(.hidden)
-        .frame(maxWidth: .infinity)
-        .noFocusRing()
-        .pointingHandCursor()
-        .help("The language being spoken. You can change it mid-call.")
     }
 
     private var micMenu: some View {

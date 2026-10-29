@@ -143,7 +143,7 @@ final class SpeakerStream {
         }
     }
 
-    private static func decibels(_ buffer: AVAudioPCMBuffer) -> Float {
+    static func decibels(_ buffer: AVAudioPCMBuffer) -> Float {
         guard let samples = buffer.floatChannelData?[0], buffer.frameLength > 0 else { return -100 }
         let n = Int(buffer.frameLength)
         var sum: Float = 0

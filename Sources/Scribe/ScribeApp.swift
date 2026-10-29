@@ -30,6 +30,10 @@ struct ScribeApp: App {
                     .keyboardShortcut("r", modifiers: [.command])
             }
         }
+
+        Settings {
+            SettingsView().environmentObject(model)
+        }
     }
 }
 

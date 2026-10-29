@@ -6,14 +6,35 @@ struct DetailView: View {
     @State private var editingTitle = false
     @State private var titleDraft = ""
     @FocusState private var titleFocused: Bool
+    @State private var confirmTranscribe: Session?
 
     var body: some View {
+        VStack(spacing: 0) {
+            if let problem = model.problem {
+                StatusBanner(problem: problem)
+                Divider()
+            }
+            content
+        }
+        .confirmationDialog("Transcribe this call again?",
+                            isPresented: Binding(get: { confirmTranscribe != nil },
+                                                 set: { if !$0 { confirmTranscribe = nil } }),
+                            presenting: confirmTranscribe) { session in
+            Button("Transcribe") { model.transcribe(session) }
+        } message: { session in
+            Text("Scribe will send the recording to OpenAI and replace the current transcript. A call this long costs about \(model.transcribeCost(session))¢.")
+        }
+    }
+
+    private var content: some View {
         Group {
             if let session = model.selected {
                 VStack(spacing: 0) {
                     header(session)
                     Divider()
-                    TranscriptView(session: session, live: session.id == model.liveID)
+                    transcribeBar(session)
+                    TranscriptView(session: session, live: session.id == model.liveID,
+                                   transcribing: model.transcribing[session.id] != nil)
                     if let notice = model.notice, session.id == model.liveID {
                         noticeBar(notice)
                     }
@@ -40,6 +61,13 @@ struct DetailView: View {
                     }
                 }
                 ToolbarItemGroup {
+                    Button { requestTranscribe(session) } label: {
+                        Image(systemName: "text.badge.checkmark")
+                    }
+                    .help("Transcribe this call again")
+                    .disabled(session.id == model.liveID || model.transcribing[session.id] != nil
+                              || !model.hasRecording(session))
+
                     Button { model.copyTranscript(session) } label: {
                         Image(systemName: "doc.on.doc")
                     }.help("Copy transcript")
@@ -106,7 +134,7 @@ struct DetailView: View {
                 }
                 .font(.system(size: 13, weight: .medium))
             } else {
-                Text("\(CallLanguage.name(for: session.languageCode)) · \(Format.duration(session.duration))")
+                Text(Format.duration(session.duration))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -118,6 +146,59 @@ struct DetailView: View {
     private func commitTitle(_ session: Session) {
         model.rename(session, to: titleDraft.trimmingCharacters(in: .whitespaces))
         editingTitle = false
+    }
+
+    private func requestTranscribe(_ session: Session) {
+        if session.turns.contains(where: { !$0.text.isEmpty }) {
+            confirmTranscribe = session
+        } else {
+            model.transcribe(session)
+        }
+    }
+
+    /// Progress while a saved call is being transcribed, or an offer to
+    /// transcribe one that's missing text.
+    @ViewBuilder
+    private func transcribeBar(_ session: Session) -> some View {
+        if let progress = model.transcribing[session.id] {
+            HStack(spacing: 10) {
+                ProgressView(value: Double(progress.done), total: Double(max(progress.total, 1)))
+                    .frame(maxWidth: 220)
+                Text(progress.total == 0 ? "Transcribing…" : "Transcribing… \(progress.done) of \(progress.total)")
+                    .font(.system(size: 12))
+                    .monospacedDigit()
+                Spacer()
+                Button("Cancel") { model.cancelTranscribing(session) }
+                    .controlSize(.small)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
+            .background(Color.primary.opacity(0.04))
+            Divider()
+        } else if session.id != model.liveID, model.hasRecording(session),
+                  let text = missingText(session) {
+            HStack(spacing: 10) {
+                Image(systemName: "text.badge.xmark").foregroundStyle(.secondary)
+                Text(text).font(.system(size: 12))
+                Spacer()
+                Button("Transcribe") { model.transcribe(session) }
+                    .controlSize(.small)
+                    .disabled(model.problem == .noKey)
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
+            .background(Color.yellow.opacity(0.10))
+            Divider()
+        }
+    }
+
+    private func missingText(_ session: Session) -> String? {
+        let hasText = session.turns.contains { !$0.text.isEmpty }
+        let missing = session.missingTurns ?? 0
+        if !hasText && session.duration > 0 { return "This call hasn't been transcribed." }
+        if missing == 1 { return "One part of this call wasn't transcribed." }
+        if missing > 1 { return "\(missing) parts of this call weren't transcribed." }
+        return nil
     }
 
     private func noticeBar(_ text: String) -> some View {
