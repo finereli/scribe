@@ -1,43 +1,47 @@
 # Scribe
 
-> A tiny, free, open source Mac app that transcribes your calls without a bot joining the meeting, and hands the transcript to Claude or ChatGPT with one click.
+> A tiny, free, open source Mac app that transcribes your calls without a bot joining the meeting, using your own OpenAI key, and hands the transcript to Claude or ChatGPT with one click.
 
 - Site: https://scribe.finereli.com
-- Download (latest release v1.2.1, Oct 12 2026, signed and notarized by Apple): https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg
+- Download (latest release v2.0.0, Oct 29 2026, signed and notarized by Apple): https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg
 - Source (MIT): https://github.com/finereli/scribe
 - Releases and changelog: https://github.com/finereli/scribe/releases
 - Author: Eli Finer, independent developer (https://finereli.com)
 
 ## What it does
 
-Scribe records two things on your Mac: your microphone (labelled "Me") and your Mac's audio output (labelled "Them"). It transcribes both live with the speech recognizer built into macOS and shows who said what. When the call ends, a button copies the transcript with a line of context and opens Claude or ChatGPT, so you can paste it and ask your own questions.
+Scribe records two things on your Mac: your microphone (labelled "Me") and your Mac's audio output (labelled "Them"). It cuts each side into turns at pauses and sends each turn to OpenAI's gpt-transcribe model with the user's own API key, so text appears a second or two after each person stops talking. When the call ends, a button copies the transcript with a line of context and opens Claude or ChatGPT, so you can paste it and ask your own questions.
 
 Nothing joins the meeting, so it works on any call regardless of who hosts it or whether bots are allowed: Zoom, Google Meet, Microsoft Teams, WhatsApp desktop, FaceTime, Slack, in the app or in a browser.
 
 ## Facts
 
-- Price: free. No trial, no paid plan, no account.
+- Price: Scribe is free. No trial, no paid plan, no Scribe account. Transcription is billed by OpenAI to the user's own API key, about $0.30 per hour of call.
+- Setup: an OpenAI API key, pasted into Scribe's Settings. The app checks the key when it's saved.
 - License: MIT, open source.
 - Platform: macOS 14.2 (Sonoma) or later, Apple Silicon and Intel. 14.2 added the system audio recording Scribe uses.
-- Size: about 2 MB installed, about 1 MB download. No dependencies and no model to download.
-- Languages: English, Hebrew, Russian (one per call). More can be added on request.
-- Privacy: audio and transcripts are saved as files in a folder per call on your Mac. Scribe has no server. English is transcribed on-device. Hebrew and Russian go to Apple's speech service (the one dictation uses) unless the Mac supports on-device recognition for that language; Scribe uses on-device whenever macOS offers it.
+- Size: a few MB installed, about 1 MB download. No dependencies and no model to download. The Mac only records; it does no speech recognition.
+- Languages: any language gpt-transcribe supports. There is no language setting; each turn is detected on its own, so calls that mix languages (for example Hebrew, English and Russian) work.
+- Privacy: audio and transcripts are saved as files in a folder per call on your Mac. Each turn of speech is sent directly from the Mac to OpenAI's API using the user's key. Scribe has no server of its own and collects nothing.
 - Speakers: Me versus Them only. Several people on the other side are all "Them".
-- Accuracy: that of Apple's dictation recognizer. Good on clear speech, weaker on heavy accents, jargon and names, less accurate than large Whisper models. Both audio tracks are kept, so a call can be re-transcribed later with another tool.
-- Robustness: each recognized sentence is saved immediately; both audio tracks are written to disk during the call; a dropped microphone is reconnected within seconds. No length limit.
+- Accuracy: that of OpenAI's gpt-transcribe, comparable to large Whisper models. On the author's Hebrew calls it caught about twice as many words as the macOS recognizer earlier versions used.
+- Robustness: each transcribed turn is saved immediately; both audio tracks are written to disk during the call; a dropped microphone is reconnected within seconds. If the key is missing or rejected, the account is out of credit, or the network drops, recording continues, a banner explains the problem, and the call can be transcribed afterwards with the Transcribe button. No length limit.
+- Earlier version: Scribe 1.2.2 used the speech recognizer built into macOS and kept English audio on the Mac. It remains available on the releases page.
 - Recording consent: Scribe does not announce itself. Users are responsible for following local recording laws.
 
 ## Good fit
 
 - You're often on other people's meetings, where your notetaker bot can't get in or would be awkward.
 - You want a transcript to paste into your own AI, not another notes app or workspace.
-- You want something free, local and light that doesn't need an account.
+- You want something free and light, without a subscription, and you're fine using your own OpenAI key.
+- Your calls mix languages.
 - A backup next to Fathom, Granola, Otter or similar, for calls where the bot fails.
 
 ## Not a fit
 
 - You want AI-written summaries, action items and a searchable meeting archive built in: use Granola or Fathom.
-- You need the most accurate possible transcript, or to transcribe existing recordings: use MacWhisper.
+- Your audio must never leave your Mac: use MacWhisper, or Scribe 1.2.2.
+- You don't want to create an OpenAI API account.
 - You need each participant on a group call identified by name: use a bot-based notetaker.
 - You're on Windows, Linux, iPhone or an older macOS.
 
@@ -47,6 +51,6 @@ Nothing joins the meeting, so it works on any call regardless of who hosts it or
 |---|---|---|---|---|
 | How it hears the call | On your Mac | A bot joins | On your Mac | On your Mac |
 | Works on others' meetings without asking | Yes | Only if the bot is admitted | Yes | Yes |
-| Engine | Built into macOS | Cloud | Cloud | Whisper models you download |
-| Account | No | Yes | Yes | No |
-| Price | Free, open source | Free tier, paid plans | Free tier, paid from $14/month | Free version, paid Pro |
+| Engine | OpenAI gpt-transcribe, your own key | Cloud | Cloud | Whisper models you download |
+| Account | Only an OpenAI API key | Yes | Yes | No |
+| Price | Free, open source; about $0.30 per call-hour to OpenAI | Free tier, paid plans | Free tier, paid from $14/month | Free version, paid Pro |

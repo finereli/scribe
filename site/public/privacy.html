@@ -34,27 +34,30 @@
 <main class="wrap doc">
   <div class="prose">
     <h1>Privacy</h1>
-    <p class="updated">Last updated October 9, 2026</p>
+    <p class="updated">Last updated October 29, 2026</p>
 
-    <p>The short version: Scribe collects nothing. There's no account, no server, and no analytics. What you record stays on your Mac.</p>
+    <p>The short version: Scribe collects nothing. There's no Scribe account, no Scribe server, and no analytics. Your recordings stay on your Mac. To transcribe them, Scribe sends the speech to OpenAI using your own API key, and nowhere else.</p>
 
     <h2>What Scribe stores</h2>
     <p>When you record a call, Scribe saves your side and their side as two audio files, plus the transcript, in a folder on your Mac:</p>
     <p><code>~/Library/Application Support/Scribe</code></p>
     <p>Scribe also keeps a small log file there, <code>scribe.log</code>, so a call that went wrong can be diagnosed. It records things like when the microphone started, and it includes the transcribed text too, so treat it as you would a transcript. Like everything else in that folder, it never leaves your Mac.</p>
-    <p>Nothing is uploaded anywhere by Scribe. You can open the folder from the app, and deleting a call in the app deletes its folder. If you delete the app, the folder stays until you remove it yourself.</p>
+    <p>Apart from the speech sent to OpenAI for transcription (below), nothing is uploaded anywhere by Scribe. You can open the folder from the app, and deleting a call in the app deletes its folder. If you delete the app, the folder stays until you remove it yourself.</p>
 
     <h2>Speech recognition</h2>
-    <p>Scribe doesn't do speech recognition itself. It asks macOS to do it.</p>
+    <p>Scribe doesn't do speech recognition itself. OpenAI does it, using an API key you give Scribe from your own OpenAI account.</p>
     <ul>
-      <li><b>English</b> is transcribed entirely on your Mac.</li>
-      <li><b>Other languages</b> (Hebrew and Russian) are sent by macOS to Apple's speech service, the same one dictation uses. That's covered by <a href="https://www.apple.com/legal/privacy/">Apple's privacy policy</a>, not this one.</li>
+      <li>During a call, Scribe cuts each side into turns at pauses and sends each turn straight from your Mac to OpenAI's API as a short audio clip, along with the last few words transcribed, for context. OpenAI sends back the text.</li>
+      <li>When you use Transcribe on a saved call, the same thing happens with that call's recordings.</li>
+      <li>Your key is kept in a file on your Mac, <code>~/.config/scribe/openai-key</code>, readable only by your user account. It's sent only to OpenAI.</li>
+      <li>What OpenAI does with the audio is covered by <a href="https://openai.com/policies/">OpenAI's policies</a> for your account, not this one. By default OpenAI doesn't use API data to train its models.</li>
     </ul>
+    <p>Scribe 1.2.2 and earlier used the speech recognizer built into macOS instead, and are still available on the <a href="https://github.com/finereli/scribe/releases">releases page</a>.</p>
 
     <h2>What Scribe doesn't do</h2>
     <ul>
       <li>It doesn't collect analytics, usage data or crash reports.</li>
-      <li>It doesn't have servers, so there's nothing for your data to be sent to.</li>
+      <li>It doesn't have servers, so nothing is sent to the author or anyone other than OpenAI.</li>
       <li>It doesn't share anything with anyone, because it doesn't have anything to share.</li>
     </ul>
 

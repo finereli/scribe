@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Scribe - a tiny Mac tool to transcribe your calls for Claude or ChatGPT</title>
-<meta name="description" content="A tiny, free Mac app that transcribes your Zoom, Meet, Teams and WhatsApp calls and hands them to Claude or ChatGPT. No bot joins the call. 2 MB, no account, open source.">
+<meta name="description" content="A tiny, free Mac app that transcribes your Zoom, Meet, Teams and WhatsApp calls and hands them to Claude or ChatGPT. No bot joins the call. Any language, open source, bring your own OpenAI key.">
 <link rel="canonical" href="https://scribe.finereli.com/">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#F2F3F5" media="(prefers-color-scheme: light)">
@@ -18,20 +18,20 @@
 <meta property="og:site_name" content="Scribe">
 <meta property="og:url" content="https://scribe.finereli.com/">
 <meta property="og:title" content="Scribe - a tiny Mac tool to transcribe your calls for Claude or ChatGPT">
-<meta property="og:description" content="Transcribe your Zoom, Meet, Teams and WhatsApp calls on your Mac and paste them into Claude or ChatGPT. No bot joins the call. Free, 2 MB, open source.">
+<meta property="og:description" content="Transcribe your Zoom, Meet, Teams and WhatsApp calls from your Mac and paste them into Claude or ChatGPT. No bot joins the call. Free, open source, any language.">
 <meta property="og:image" content="https://scribe.finereli.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Scribe: transcribe your calls on your Mac. Paste them into Claude or ChatGPT.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Scribe - a tiny Mac tool to transcribe your calls for Claude or ChatGPT">
-<meta name="twitter:description" content="Transcribe your Zoom, Meet, Teams and WhatsApp calls on your Mac and paste them into Claude or ChatGPT. No bot joins the call. Free, 2 MB, open source.">
+<meta name="twitter:description" content="Transcribe your Zoom, Meet, Teams and WhatsApp calls from your Mac and paste them into Claude or ChatGPT. No bot joins the call. Free, open source, any language.">
 <meta name="twitter:image" content="https://scribe.finereli.com/og.png">
 <meta name="twitter:image:alt" content="Scribe: transcribe your calls on your Mac. Paste them into Claude or ChatGPT.">
 
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Scribe","alternateName":"Scribe call transcriber for Mac",
-"description":"A tiny, free, open source Mac app that transcribes your calls (Zoom, Google Meet, Teams, WhatsApp) without a bot joining, and hands the transcript to Claude or ChatGPT.",
+"description":"A tiny, free, open source Mac app that transcribes your calls (Zoom, Google Meet, Teams, WhatsApp) without a bot joining, using your own OpenAI key, and hands the transcript to Claude or ChatGPT.",
 "applicationCategory":"BusinessApplication","operatingSystem":"macOS 14.2 or later","softwareVersion":"1.2.2",
 "downloadUrl":"https://github.com/finereli/scribe/releases/latest/download/Scribe.dmg","fileSize":"1MB",
 "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"license":"https://opensource.org/licenses/MIT",
@@ -64,7 +64,7 @@
       <span class="voice me"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="said">Transcribe your calls on your Mac.</span></span>
       <span class="voice them"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="said">Paste them into Claude or ChatGPT.</span></span>
     </h1>
-    <p class="lede">Scribe is a tiny Mac tool. It listens to your Zoom, Meet, Teams or WhatsApp call from your side, so no bot joins, writes down who said what, and hands the transcript to your AI with one click. 2 MB, no dependencies, no account.</p>
+    <p class="lede">Scribe is a tiny Mac tool. It listens to your Zoom, Meet, Teams or WhatsApp call from your side, so no bot joins, writes down who said what, and hands the transcript to your AI with one click. Free and open source. You bring your own OpenAI key, and an hour-long call costs about 30 cents.</p>
     <div class="get">
       <a class="download" href="https://github.com/finereli/scribe/releases/download/v1.2.2/Scribe-1.2.2.dmg">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5v10m0 0-4-4m4 4 4-4M3.5 13.5v1.5a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -79,7 +79,7 @@
     <div class="callhead">
       <div>
         <strong>Call with Dana</strong>
-        <small><span class="rec" aria-hidden="true"></span>Recording 22:41 &#160; English</small>
+        <small><span class="rec" aria-hidden="true"></span>Recording 22:41</small>
       </div>
       <div class="meters" aria-hidden="true">
         <span>Me</span><span class="meter me"></span>
@@ -115,7 +115,8 @@
       <div class="prose">
         <p>A while ago I was on an important sales call. A few minutes in I realized we were on <em>their</em> Google Meet, not mine, which meant my note-taking bot was sitting in the waiting room. To get a transcript I'd have had to ask the buyer, in the middle of a pitch, to please let my robot in. I didn't. It felt like asking someone to let you record them while you're trying to get them to trust you.</p>
         <p>So I had no transcript. Afterwards I tried to reconstruct what they'd told me, and I'd missed things that turned out to matter. I closed the deal, but barely.</p>
-        <p>That happened a few more times. The other tools I tried were either bots, which have the same problem, or they ran big speech models that made my laptop work hard for an hour after every call. Then I noticed that my Mac was already pretty good at turning speech into text. It's been doing it for dictation for years. So I built the thing I actually wanted on top of that.</p>
+        <p>That happened a few more times. The other tools I tried were either bots, which have the same problem, or they ran big speech models that made my laptop work hard for an hour after every call. So I built the thing I actually wanted.</p>
+        <p>The first version used the speech recognizer built into macOS. It worked, but it missed a lot, especially in Hebrew, and it only did one language per call. Version 2 sends each stretch of speech to OpenAI instead. On the same calls it catches about twice as many words, it follows you when you switch languages mid-sentence, and your Mac does nothing but record. The price is that your speech goes to OpenAI, using your own key. For me that was an easy trade. If it isn't for you, <a href="https://github.com/finereli/scribe/releases/tag/v1.2.2">version 1.2.2</a> is still there and keeps everything on your Mac.</p>
         <p class="signature">Eli Finer</p>
       </div>
       <aside class="for" aria-labelledby="for">
@@ -132,7 +133,7 @@
     <dl class="points">
       <div class="point">
         <dt>It's tiny.</dt>
-        <dd>Scribe isn't another place your meetings live. There's no account, no workspace and no AI of its own to learn. It's a 2 MB app (a 1 MB download) with no dependencies that uses the speech recognizer already built into macOS, so there's no model to download. It runs on Apple Silicon and Intel Macs alike. Pick it up when a call starts, put it down when it ends.</dd>
+        <dd>Scribe isn't another place your meetings live. There's no Scribe account, no workspace and no AI of its own to learn. It's a small app with no dependencies and no model to download, and while it records, your Mac barely notices. It runs on Apple Silicon and Intel Macs alike. Pick it up when a call starts, put it down when it ends.</dd>
       </div>
       <div class="point">
         <dt>Your AI does the thinking.</dt>
@@ -147,9 +148,12 @@
         <dd>Nobody gets a "Notetaker wants to join" message. It doesn't matter whose meeting it is or which app it's in. Scribe listens on your Mac, the same way you do.</dd>
       </div>
       <div class="point">
-        <dt>Your audio stays on your Mac.</dt>
-        <dd>Both sides are saved as audio files on your disk, next to the transcript. There's no account, and Scribe has no server of its own.
-          <small>One caveat: English is transcribed entirely on your Mac. For Hebrew and Russian, macOS sends the audio to Apple's speech service, the same one dictation uses, unless your Mac can recognize that language on-device. Scribe always uses on-device recognition when macOS offers it.</small></dd>
+        <dt>No middleman.</dt>
+        <dd>Both sides of the call are saved as audio files on your disk, next to the transcript. To transcribe, Scribe sends each stretch of speech straight from your Mac to OpenAI, using your key. Scribe has no server of its own, so there's nobody in between, and nothing to sign up for except OpenAI.</dd>
+      </div>
+      <div class="point">
+        <dt>Any language, even mixed.</dt>
+        <dd>There's no language to pick. OpenAI works out what's being said turn by turn, so a call that drifts from Hebrew to English and back comes out right.</dd>
       </div>
       <div class="point">
         <dt>It knows who said what.</dt>
@@ -157,7 +161,7 @@
       </div>
       <div class="point">
         <dt>It's free and open source.</dt>
-        <dd>No trial, no plans. The code is on GitHub under the MIT license, small enough to read before you trust it with your audio, and easy to change if you want it to do something it doesn't.</dd>
+        <dd>No trial, no plans. The code is on GitHub under the MIT license, small enough to read before you trust it with your audio, and easy to change if you want it to do something it doesn't. You pay OpenAI for transcription directly, about 30 cents an hour, and nobody else.</dd>
       </div>
     </dl>
   </div>
@@ -167,9 +171,9 @@
   <div class="wrap split">
     <h2 id="now">Why now</h2>
     <div class="prose">
-      <p>Until recently the built-in transcription wasn't good enough to be worth keeping. Now it is, at least for what most of us actually do with transcripts: paste them into Claude or ChatGPT.</p>
-      <p>An AI reading the transcript doesn't need every word to be perfect. It needs the conversation, and it needs it without you having to ask anyone's permission.</p>
-      <p>And the bots are being shown the door. In August 2026 Microsoft gave Teams admins <a href="https://office365itpros.com/2026/08/24/teams-meeting-notetaking-bots/">a policy to detect and block notetaker bots</a>. A tool that never joins the meeting doesn't have that problem.</p>
+      <p>Speech models got good and cheap at the same time. A year ago a transcript this good meant a subscription or an hour of your laptop's fans. Now it's a few cents a call, and it lands a second after someone stops talking.</p>
+      <p>And an AI reading the transcript doesn't need every word to be perfect anyway. It needs the conversation, and it needs it without you having to ask anyone's permission.</p>
+      <p>The bots, meanwhile, are being shown the door. In August 2026 Microsoft gave Teams admins <a href="https://office365itpros.com/2026/08/24/teams-meeting-notetaking-bots/">a policy to detect and block notetaker bots</a>. A tool that never joins the meeting doesn't have that problem.</p>
     </div>
   </div>
 </section>
@@ -185,16 +189,16 @@
       <tbody>
         <tr><th scope="row">How it hears the call</th><td class="scribe" data-col="Scribe">On your Mac</td><td data-col="Fathom">A bot joins the call</td><td data-col="Granola">On your Mac</td><td data-col="MacWhisper">On your Mac</td></tr>
         <tr><th scope="row">Works on someone else's meeting without asking</th><td class="scribe" data-col="Scribe">Yes</td><td data-col="Fathom">Only if they let the bot in</td><td data-col="Granola">Yes</td><td data-col="MacWhisper">Yes</td></tr>
-        <tr><th scope="row">Where your audio goes</th><td class="scribe" data-col="Scribe">Stays on your Mac (English)</td><td data-col="Fathom">Their servers</td><td data-col="Granola">Transcribed in their cloud</td><td data-col="MacWhisper">Stays on your Mac</td></tr>
-        <tr><th scope="row">Transcription engine</th><td class="scribe" data-col="Scribe">Built into macOS</td><td data-col="Fathom">Cloud</td><td data-col="Granola">Cloud</td><td data-col="MacWhisper">Whisper models you download</td></tr>
-        <tr><th scope="row">Load on your Mac</th><td class="scribe" data-col="Scribe">Light</td><td data-col="Fathom">None</td><td data-col="Granola">Light</td><td data-col="MacWhisper">Heavy, especially with the better models</td></tr>
-        <tr><th scope="row">Account needed</th><td class="scribe" data-col="Scribe">No</td><td data-col="Fathom">Yes</td><td data-col="Granola">Yes</td><td data-col="MacWhisper">No</td></tr>
+        <tr><th scope="row">Where your audio goes</th><td class="scribe" data-col="Scribe">Recordings stay on your Mac; speech goes to OpenAI on your key</td><td data-col="Fathom">Their servers</td><td data-col="Granola">Transcribed in their cloud</td><td data-col="MacWhisper">Stays on your Mac</td></tr>
+        <tr><th scope="row">Transcription engine</th><td class="scribe" data-col="Scribe">OpenAI, your own key</td><td data-col="Fathom">Cloud</td><td data-col="Granola">Cloud</td><td data-col="MacWhisper">Whisper models you download</td></tr>
+        <tr><th scope="row">Load on your Mac</th><td class="scribe" data-col="Scribe">Recording only</td><td data-col="Fathom">None</td><td data-col="Granola">Light</td><td data-col="MacWhisper">Heavy, especially with the better models</td></tr>
+        <tr><th scope="row">Account needed</th><td class="scribe" data-col="Scribe">Just an OpenAI API key</td><td data-col="Fathom">Yes</td><td data-col="Granola">Yes</td><td data-col="MacWhisper">No</td></tr>
         <tr><th scope="row">Summaries and analysis</th><td class="scribe" data-col="Scribe">Paste into your own AI</td><td data-col="Fathom">Built in</td><td data-col="Granola">Built in</td><td data-col="MacWhisper">Some built in</td></tr>
         <tr><th scope="row">Your old transcripts</th><td class="scribe" data-col="Scribe">Files on your disk, forever</td><td data-col="Fathom">In their app</td><td data-col="Granola">Free plan: last 30 days</td><td data-col="MacWhisper">Files on your disk</td></tr>
-        <tr><th scope="row">Price</th><td class="scribe" data-col="Scribe">Free and open source</td><td data-col="Fathom">Free tier, paid plans</td><td data-col="Granola">Free tier, paid from $14/month</td><td data-col="MacWhisper">Free version, paid Pro</td></tr>
+        <tr><th scope="row">Price</th><td class="scribe" data-col="Scribe">Free; about 30¢ per call-hour to OpenAI</td><td data-col="Fathom">Free tier, paid plans</td><td data-col="Granola">Free tier, paid from $14/month</td><td data-col="MacWhisper">Free version, paid Pro</td></tr>
       </tbody>
     </table>
-    <p class="compare-outro">Fathom is great when you own the meeting and everyone expects a notetaker. Granola is great if you want AI-written notes and don't mind the cloud. MacWhisper is great for transcribing recordings as accurately as possible. Scribe is for when you just want the transcript, on your own Mac, without paying for it or making it anyone else's business.</p>
+    <p class="compare-outro">Fathom is great when you own the meeting and everyone expects a notetaker. Granola is great if you want AI-written notes and don't mind the cloud. MacWhisper is great when audio must never leave your Mac. Scribe is for when you just want a good transcript of your own calls, without a subscription and without making it anyone else's business.</p>
   </div>
 </section>
 
@@ -205,8 +209,7 @@
       <li><b>Works with any calling app.</b> <span>Scribe records your microphone and whatever your Mac plays, so it doesn't care which app the call is in: Zoom, Google Meet, Microsoft Teams, WhatsApp desktop, FaceTime, Slack huddles or a browser tab.</span></li>
       <li><b>Works with any headphones.</b> <span>AirPods, Bluetooth buds or wired. Scribe records whatever your Mac is using.</span></li>
       <li><b>Talking over each other is fine.</b> <span>Each side is recorded as its own stream, so when a laggy connection has you both talking at once, every word from both of you still makes it into the transcript.</span></li>
-      <li><b>Nothing lost if it crashes.</b> <span>Each sentence is saved the moment it's recognized, and both audio tracks are written to disk as the call goes. If a microphone drops out, Scribe reconnects it within a few seconds.</span></li>
-      <li><b>English, Hebrew and Russian.</b> <span>Need another language? <a href="https://github.com/finereli/scribe/issues/new?title=Language%20request%3A%20">Ask for it</a>.</span></li>
+      <li><b>Nothing lost if something goes wrong.</b> <span>Each turn is saved the moment it's transcribed, and both audio tracks are written to disk as the call goes. If the key stops working, the account runs out of credit or the Wi-Fi drops, Scribe keeps recording, tells you what's wrong, and catches up or lets you transcribe the call afterwards.</span></li>
     </ul>
   </div>
 </section>
@@ -219,19 +222,19 @@
         <h3>Install</h3>
         <ol class="steps">
           <li><span><a href="https://github.com/finereli/scribe/releases/download/v1.2.2/Scribe-1.2.2.dmg">Download Scribe</a> and drag it to Applications.</span></li>
-          <li><span>Open it. macOS will ask for three permissions: <b>Microphone</b> (your side), <b>Speech Recognition</b> (the transcript), and <b>System Audio Recording</b> (their side). Allow all three.</span></li>
+          <li><span>Open it. macOS will ask for two permissions: <b>Microphone</b> (your side) and <b>System Audio Recording</b> (their side). Allow both.</span></li>
+          <li><span>Click <b>Add Key…</b> and paste an OpenAI API key from <a href="https://platform.openai.com/api-keys">platform.openai.com</a>. A few dollars of credit lasts a lot of calls.</span></li>
         </ol>
         <p class="note">Requires macOS 14.2 (Sonoma) or later. Built for both Apple Silicon and Intel Macs.</p>
       </div>
       <div>
         <h3>Use</h3>
         <ol class="steps">
-          <li><span>Pick the call's language.</span></li>
           <li><span>Press the red button (or <kbd>⌘R</kbd>) when the call starts. Check that the Me and Them meters move.</span></li>
-          <li><span>Talk. The transcript appears as you go.</span></li>
+          <li><span>Talk. Each turn appears a second or two after the person pauses.</span></li>
           <li><span>Press stop, then click the Claude or ChatGPT button and paste.</span></li>
         </ol>
-        <p class="note">Every call is kept in its own folder with both sides recorded separately, so you can re-transcribe them later with anything you like.</p>
+        <p class="note">Every call is kept in its own folder with both sides recorded separately. A call recorded offline or without a working key can be transcribed afterwards with the Transcribe button.</p>
       </div>
     </div>
   </div>
@@ -248,15 +251,17 @@
       <div><dt>Which apps does it work with?</dt>
         <dd>Any app that plays the call through your Mac: Zoom, Google Meet, Microsoft Teams, WhatsApp desktop, FaceTime, Slack and others, in the app or in the browser.</dd></div>
       <div><dt>Is it really free? What's the catch?</dt>
-        <dd>It's free, with no trial, no plans and no account. It's open source under the MIT license. I built it for my own calls and I'd rather people use it than pay for it.</dd></div>
+        <dd>Scribe itself is free, with no trial, no plans and no Scribe account. It's open source under the MIT license. Transcription runs on your own OpenAI account, which costs about 30 cents per hour of call, and that money goes to OpenAI, not me. I built it for my own calls and I'd rather people use it than pay for it.</dd></div>
+      <div><dt>Why do I need an OpenAI key?</dt>
+        <dd>Because that's what does the transcribing. Using your own key means there's no Scribe server between you and OpenAI, nobody marking up the price, and nothing for me to keep running. You make a key at <a href="https://platform.openai.com/api-keys">platform.openai.com</a> and add a few dollars of credit.</dd></div>
       <div><dt>Where does my audio go?</dt>
-        <dd>To a folder on your Mac. Each call gets its own folder with two audio files (Me and Them) and the transcript. English is transcribed on your Mac. Hebrew and Russian go to Apple's speech service unless your Mac recognizes them on-device. Scribe has no server and sends nothing anywhere else. When you click the Claude or ChatGPT button, the transcript goes to your clipboard and you choose where to paste it.</dd></div>
+        <dd>The recordings go to a folder on your Mac: each call gets its own folder with two audio files (Me and Them) and the transcript. To transcribe, Scribe sends each stretch of speech to OpenAI with your key, and OpenAI sends back the text. OpenAI handles it under <a href="https://openai.com/enterprise-privacy/">its API terms</a>, which don't use it for training by default. Scribe has no server and sends nothing anywhere else. When you click the Claude or ChatGPT button, the transcript goes to your clipboard and you choose where to paste it.</dd></div>
       <div><dt>How accurate is it?</dt>
-        <dd>It uses the recognizer macOS uses for dictation. It's good on clear speech and weaker on heavy accents, jargon and unusual names. It's less accurate than the larger Whisper models, but good enough for what most people do with a call transcript: paste it into an AI and ask questions. Both sides' audio is kept, so you can re-transcribe a call that matters with something heavier, like MacWhisper.</dd></div>
+        <dd>Good. It uses OpenAI's gpt-transcribe, which is about as accurate as the large Whisper models and handles punctuation, accents and mixed languages well. On my own Hebrew calls it caught about twice as many words as the macOS recognizer Scribe used before. Unusual names still come out wrong sometimes, but the AI you paste it into usually works them out.</dd></div>
       <div><dt>Can it tell different speakers apart?</dt>
         <dd>It knows you from them: your microphone is Me and your Mac's audio is Them. It doesn't separate several people on the other side.</dd></div>
       <div><dt>Which languages?</dt>
-        <dd>English, Hebrew and Russian, one language per call. Others are easy to add because macOS supports many. <a href="https://github.com/finereli/scribe/issues/new?title=Language%20request%3A%20">Ask for one</a>.</dd></div>
+        <dd>Pretty much any language OpenAI knows, which is most of them. There's nothing to choose: each turn is recognized on its own, so a call can switch languages as often as the people on it do.</dd></div>
       <div><dt>Is there a length limit?</dt>
         <dd>No. Scribe splits speech at pauses as it goes, so a long call is just a long list of turns.</dd></div>
       <div><dt>Which Macs?</dt>
@@ -266,7 +271,7 @@
       <div><dt>Who makes it, and is it maintained?</dt>
         <dd><a href="https://finereli.com">Eli Finer</a>, an independent developer, who uses it on his own calls. Releases and changes are on <a href="https://github.com/finereli/scribe/releases">GitHub</a>, and <a href="https://github.com/finereli/scribe/issues">issues</a> are the place to report a problem.</dd></div>
       <div><dt>When should I use something else?</dt>
-        <dd>If you want AI-written notes, action items and a searchable archive, Granola or Fathom do that out of the box. If you need the most accurate transcript or files from a recording, MacWhisper is better. If you need each person on a group call named separately, use a bot-based notetaker. Scribe is for getting a call transcript on your own Mac, free, without asking anyone.</dd></div>
+        <dd>If you want AI-written notes, action items and a searchable archive, Granola or Fathom do that out of the box. If your audio must never leave your Mac, use MacWhisper, or <a href="https://github.com/finereli/scribe/releases/tag/v1.2.2">Scribe 1.2.2</a>, which uses the recognizer built into macOS. If you need each person on a group call named separately, use a bot-based notetaker. Scribe is for getting a good transcript of your own calls, without a subscription and without asking anyone.</dd></div>
     </dl>
   </div>
 </section>
