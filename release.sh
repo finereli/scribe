@@ -32,7 +32,7 @@ xcrun stapler validate "$DMG"
 cp "$DMG" Scribe.dmg
 
 # The site links to the versioned file, so downloads carry the version.
-sed -i '' -E "s#releases/(latest/download|download/v[0-9.]+)/Scribe(-[0-9.]+)?\.dmg#releases/download/v$VERSION/$DMG#g; s#Version [0-9.]+\.#Version $VERSION.#" site/public/index.html
+sed -i '' -E "s#releases/(latest/download|download/v[0-9.]+)/Scribe(-[0-9.]+)?\.dmg#releases/download/v$VERSION/$DMG#g; s#Version [0-9.]+\.#Version $VERSION.#; s#\"softwareVersion\":\"[0-9.]+\"#\"softwareVersion\":\"$VERSION\"#" site/public/index.html
 
 echo "Ready: $ZIP $DMG Scribe.dmg"
 echo "Publish: gh release create v$VERSION $DMG $ZIP Scribe.dmg"
