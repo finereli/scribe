@@ -2,10 +2,9 @@ import Foundation
 import AppKit
 import AVFoundation
 import Combine
-import Speech
 
-/// The languages Scribe offers. One per call; the built-in recognizer can't
-/// switch mid-stream.
+/// The languages Scribe offers. Switchable mid-call; it applies from the
+/// next turn on.
 struct CallLanguage: Identifiable, Hashable {
     let id: String
     let name: String
@@ -63,7 +62,6 @@ final class AppModel: ObservableObject {
     init() {
         languageCode = UserDefaults.standard.string(forKey: "languageCode") ?? "en-US"
         selection = store.sessions.first?.id
-        SFSpeechRecognizer.requestAuthorization { _ in }
         AVCaptureDevice.requestAccess(for: .audio) { _ in }
 
         for child in [store.objectWillChange, devices.objectWillChange] {
@@ -98,7 +96,7 @@ final class AppModel: ObservableObject {
 
     func start() {
         guard !isRecording else { return }
-        Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) speech=\(SFSpeechRecognizer.authorizationStatus().rawValue) device=\(devices.activeDevice?.name ?? "none") follows=\(devices.followsDefault) lang=\(languageCode)")
+        Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) device=\(devices.activeDevice?.name ?? "none") follows=\(devices.followsDefault) lang=\(languageCode)")
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
         case .denied, .restricted:
             errorMessage = "Microphone access is off. Turn it on in System Settings ▸ Privacy & Security ▸ Microphone."
@@ -110,15 +108,8 @@ final class AppModel: ObservableObject {
             return
         default: break
         }
-        switch SFSpeechRecognizer.authorizationStatus() {
-        case .authorized: break
-        case .notDetermined:
-            SFSpeechRecognizer.requestAuthorization { [weak self] _ in
-                DispatchQueue.main.async { self?.start() }
-            }
-            return
-        default:
-            errorMessage = "Speech recognition is off. Turn it on in System Settings ▸ Privacy & Security ▸ Speech Recognition."
+        guard APIKey.openAI != nil else {
+            errorMessage = APIKey.missingMessage
             return
         }
 

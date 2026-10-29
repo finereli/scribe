@@ -1,56 +1,50 @@
 import Foundation
 import AVFoundation
-import Speech
 
-/// Runs speech recognition one turn at a time for both speakers.
+/// Transcribes turns with OpenAI's gpt-transcribe, one upload per turn.
 ///
-/// macOS runs one recognition task per app: starting a second one cancels
-/// the first. So turns queue up here. A turn that starts while nothing else
-/// is being recognized streams live, with partial results as the person
-/// talks. A turn that starts while the other speaker's turn is running
-/// collects its audio, and is recognized from that buffer as soon as the
-/// recognizer is free.
+/// A turn's audio is collected while the person talks. When the turn ends it
+/// goes up as a small WAV and its text comes back a second or two later.
+/// Turns upload in parallel and land in any order; each carries its own start
+/// time, so the transcript sorts itself. The Mac does nothing but record.
 final class RecognitionQueue {
     /// Called on the main queue for every partial and final result.
     var onUpdate: ((Turn) -> Void)?
-    /// Called on the main queue for recognizer errors worth showing.
+    /// Called on the main queue for errors worth showing.
     var onError: ((String) -> Void)?
+
+    static let model = "gpt-transcribe"
+    private static let sampleRate = 16_000.0
 
     private final class Job {
         let id = UUID()
         let speaker: Speaker
         let start: TimeInterval
-        var buffers: [AVAudioPCMBuffer] = []
-        var ended = false
-        var request: SFSpeechAudioBufferRecognitionRequest?
-        var task: SFSpeechRecognitionTask?
-        var turn: Turn
-        /// Text from before the recognizer last started over, and the
-        /// latest result since then. See `handle`.
-        var earlier = ""
-        var latest = ""
+        var language = ""
+        var samples: [Float] = []
 
         init(speaker: Speaker, start: TimeInterval) {
             self.speaker = speaker
             self.start = start
-            turn = Turn(id: id, speaker: speaker, start: start, end: start, text: "", isFinal: false)
         }
     }
 
-    // Replaced when the language changes mid-call; touched only on `queue`
-    // after init.
-    private var recognizer: SFSpeechRecognizer?
-    private var onDevice: Bool
+    // Touched only on `queue`.
     private let queue = DispatchQueue(label: "com.finereli.scribe.recognition")
     private var jobs: [UUID: Job] = [:]
-    private var active: Job?
-    private var pending: [Job] = []
+    private var language: String
+    /// The last few words transcribed, passed as the prompt so a turn that
+    /// starts mid-thought has context.
+    private var context = ""
+    private var cancelled = false
+    private let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 30
+        return URLSession(configuration: config)
+    }()
 
     init(languageCode: String) {
-        let recognizer = SFSpeechRecognizer(locale: Locale(identifier: languageCode))
-        recognizer?.defaultTaskHint = .dictation
-        self.recognizer = recognizer
-        onDevice = recognizer?.supportsOnDeviceRecognition ?? false
+        language = Self.isoCode(languageCode)
     }
 
     // MARK: - Turns (any thread)
@@ -58,171 +52,158 @@ final class RecognitionQueue {
     func begin(speaker: Speaker, at start: TimeInterval) -> UUID {
         let job = Job(speaker: speaker, start: start)
         queue.async {
+            job.language = self.language
             self.jobs[job.id] = job
-            if self.active == nil { self.run(job) } else { self.pending.append(job) }
+            // Show that this speaker is talking until the text arrives.
+            self.emit(Turn(id: job.id, speaker: speaker, start: start, end: start, text: "…", isFinal: false))
         }
         return job.id
     }
 
     func append(_ buffer: AVAudioPCMBuffer, to id: UUID) {
-        queue.async {
-            guard let job = self.jobs[id] else { return }
-            if let request = job.request { request.append(buffer) } else { job.buffers.append(buffer) }
-        }
+        guard let channel = buffer.floatChannelData?[0] else { return }
+        let samples = Array(UnsafeBufferPointer(start: channel, count: Int(buffer.frameLength)))
+        queue.async { self.jobs[id]?.samples += samples }
     }
 
     func end(_ id: UUID) {
         queue.async {
-            guard let job = self.jobs[id], !job.ended else { return }
-            job.ended = true
-            job.request?.endAudio()
-            if job === self.active { self.watch(job) }
+            guard let job = self.jobs.removeValue(forKey: id) else { return }
+            self.upload(job, prompt: self.context)
         }
     }
 
-    /// Switch languages mid-call. Turns already running finish in the old
-    /// language; turns that start or are still queued use the new one.
+    /// Turns already running finish in the old language; turns that start
+    /// after this use the new one.
     func setLanguage(_ languageCode: String) {
         queue.async {
-            let recognizer = SFSpeechRecognizer(locale: Locale(identifier: languageCode))
-            recognizer?.defaultTaskHint = .dictation
-            self.recognizer = recognizer
-            self.onDevice = recognizer?.supportsOnDeviceRecognition ?? false
+            self.language = Self.isoCode(languageCode)
             Log.write("recognizer: switched to \(languageCode)")
         }
     }
 
     func cancelAll() {
         queue.async {
-            self.active?.task?.cancel()
-            self.active = nil
-            self.pending = []
+            self.cancelled = true
             self.jobs = [:]
         }
     }
 
-    // MARK: - Running (on queue)
+    // MARK: - Uploading
 
-    private func run(_ job: Job) {
-        guard let recognizer, recognizer.isAvailable else {
-            Log.write("recognizer unavailable, dropping a \(job.speaker.label) turn")
-            jobs[job.id] = nil
-            runNext()
+    private func upload(_ job: Job, prompt: String, attempt: Int = 1) {
+        let duration = Double(job.samples.count) / Self.sampleRate
+        var turn = Turn(id: job.id, speaker: job.speaker, start: job.start,
+                        end: job.start + duration, text: "", isFinal: true)
+        guard let key = APIKey.openAI else {
+            DispatchQueue.main.async { self.onError?(APIKey.missingMessage) }
+            emit(turn)
             return
         }
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true
-        request.requiresOnDeviceRecognition = onDevice
-        request.addsPunctuation = true
-        job.request = request
-        active = job
-
-        job.task = recognizer.recognitionTask(with: request) { [weak self] result, error in
-            self?.queue.async { self?.handle(job, result: result, error: error) }
-        }
-        job.buffers.forEach { request.append($0) }
-        job.buffers = []
-        if job.ended {
-            request.endAudio()
-            watch(job)
-        }
-    }
-
-    private func handle(_ job: Job, result: SFSpeechRecognitionResult?, error: Error?) {
-        guard jobs[job.id] != nil, !job.turn.isFinal else { return }
-        if let result {
-            // On-device recognition starts over after a pause inside a turn:
-            // the next result holds only the words since the pause, and the
-            // final one is often empty. Keep what came before, or a turn with
-            // a pause in it loses everything up to its last few words.
-            let text = result.bestTranscription.formattedString
-            if text.isEmpty {
-                // An empty final result: keep what the partials said.
-            } else if Self.startedOver(from: job.latest, to: text) {
-                job.earlier = Self.join(job.earlier, job.latest)
-                job.latest = text
-            } else if Self.repeats(job.earlier, in: text) {
-                // Sometimes it hands back the whole turn again after all.
-                job.earlier = ""
-                job.latest = text
-            } else {
-                job.latest = text
+        let request = Self.request(wav: Self.wav(job.samples), language: job.language,
+                                   prompt: prompt, key: key)
+        let sent = Date()
+        session.dataTask(with: request) { data, response, error in
+            self.queue.async {
+                guard !self.cancelled else { return }
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if error == nil, status == 200, let data {
+                    turn.text = String(decoding: data, as: UTF8.self)
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !turn.text.isEmpty {
+                        self.context = String((self.context + " " + turn.text).suffix(200))
+                    }
+                    Log.write(String(format: "recognizer %@: %.1fs of audio in %.1fs",
+                                     job.speaker.label, duration, Date().timeIntervalSince(sent)))
+                    self.emit(turn)
+                    return
+                }
+                let reason = error?.localizedDescription
+                    ?? data.map { Self.errorMessage($0) } ?? "HTTP \(status)"
+                Log.write("recognizer \(job.speaker.label): attempt \(attempt) failed: \(reason)")
+                // Network trouble, rate limits and server errors are worth
+                // another try; a bad key or request isn't.
+                let retryable = error != nil || status == 429 || status >= 500
+                if retryable && attempt < 4 {
+                    self.queue.asyncAfter(deadline: .now() + Double(attempt * attempt)) {
+                        self.upload(job, prompt: prompt, attempt: attempt + 1)
+                    }
+                } else {
+                    DispatchQueue.main.async { self.onError?("\(job.speaker.label): couldn't transcribe (\(reason))") }
+                    self.emit(turn)
+                }
             }
-            job.turn.text = Self.join(job.earlier, job.latest)
-            if Self.trace { print("TRACE \(job.id.uuidString.prefix(4)) \(result.isFinal ? "F" : "p") [\(job.earlier.split(separator: " ").count)] \(text)") }
-            if let last = result.bestTranscription.segments.last {
-                job.turn.end = max(job.turn.end, job.start + last.timestamp + last.duration)
-            }
-            if result.isFinal { finish(job) } else { emit(job.turn) }
-        } else if let error {
-            let code = (error as NSError).code
-            Log.write("recognizer \(job.speaker.label): \((error as NSError).domain) \(code) \(error.localizedDescription)")
-            // 1110 is "no speech detected": a turn that was only noise.
-            if code != 1110 && job.turn.text.isEmpty {
-                let message = "\(job.speaker.label): \(error.localizedDescription)"
-                DispatchQueue.main.async { self.onError?(message) }
-            }
-            finish(job)
+        }.resume()
+    }
+
+    private static func request(wav: Data, language: String, prompt: String, key: String) -> URLRequest {
+        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/audio/transcriptions")!)
+        request.httpMethod = "POST"
+        let boundary = "scribe-\(UUID().uuidString)"
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        func field(_ name: String, _ value: String) {
+            body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n")
         }
+        field("model", model)
+        field("response_format", "text")
+        if !language.isEmpty { field("language", language) }
+        if !prompt.isEmpty { field("prompt", prompt) }
+        body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"turn.wav\"\r\nContent-Type: audio/wav\r\n\r\n")
+        body.append(wav)
+        body.append("\r\n--\(boundary)--\r\n")
+        request.httpBody = body
+        return request
     }
 
-    /// A result that isn't a revision of the previous one: it lost several
-    /// words, or it's shorter and begins differently. Revisions touch the
-    /// last word or two, and early on the first word ("I think" becoming
-    /// "Think"), hence the three-word minimum for the second test.
-    static func startedOver(from previous: String, to text: String) -> Bool {
-        let before = previous.split(separator: " ")
-        let after = text.split(separator: " ")
-        guard !before.isEmpty, after.count < before.count else { return false }
-        if after.count + 3 < before.count { return true }
-        let first = { (w: Substring?) in w.map { $0.lowercased().filter(\.isLetter) } }
-        return before.count >= 3 && first(before.first) != first(after.first)
+    /// 16 kHz mono 16-bit WAV: 32 KB a second, so a 30-second turn is about 1 MB.
+    static func wav(_ samples: [Float]) -> Data {
+        var data = Data()
+        func put<T: FixedWidthInteger>(_ v: T) { withUnsafeBytes(of: v.littleEndian) { data.append(contentsOf: $0) } }
+        let bytes = UInt32(samples.count * 2)
+        data.append("RIFF"); put(36 + bytes); data.append("WAVE")
+        data.append("fmt "); put(UInt32(16)); put(UInt16(1)); put(UInt16(1))
+        put(UInt32(sampleRate)); put(UInt32(sampleRate * 2)); put(UInt16(2)); put(UInt16(16))
+        data.append("data"); put(bytes)
+        data.reserveCapacity(data.count + Int(bytes))
+        for s in samples { put(Int16(max(-1, min(1, s)) * Float(Int16.max))) }
+        return data
     }
 
-    /// Whether `text` starts with the same words as `earlier`, meaning the
-    /// recognizer is returning the whole turn again.
-    static func repeats(_ earlier: String, in text: String) -> Bool {
-        let a = words(earlier), b = words(text)
-        let n = min(a.count, 4)
-        return n > 0 && b.count >= a.count && Array(b.prefix(n)) == Array(a.prefix(n))
+    private static func errorMessage(_ data: Data) -> String {
+        struct Body: Decodable { struct E: Decodable { let message: String }; let error: E }
+        return (try? JSONDecoder().decode(Body.self, from: data))?.error.message
+            ?? String(decoding: data.prefix(200), as: UTF8.self)
     }
 
-    private static func words(_ s: String) -> [String] {
-        s.split(separator: " ").map { $0.lowercased().filter { $0.isLetter || $0.isNumber } }
-    }
-
-    private static let trace = ProcessInfo.processInfo.environment["SCRIBE_TRACE"] != nil
-
-    static func join(_ a: String, _ b: String) -> String {
-        a.isEmpty ? b : b.isEmpty ? a : a + " " + b
-    }
-
-    private func finish(_ job: Job) {
-        job.turn.isFinal = true
-        emit(job.turn)
-        jobs[job.id] = nil
-        if job === active {
-            active = nil
-            runNext()
-        }
-    }
-
-    private func runNext() {
-        guard active == nil, !pending.isEmpty else { return }
-        run(pending.removeFirst())
-    }
-
-    /// A task that never returns its final result would stall the queue.
-    private func watch(_ job: Job) {
-        queue.asyncAfter(deadline: .now() + 15) { [weak self] in
-            guard let self, self.jobs[job.id] != nil, job === self.active else { return }
-            Log.write("recognizer \(job.speaker.label): no final result after 15s, moving on")
-            job.task?.cancel()
-            self.finish(job)
-        }
+    /// "he-IL" to "he", the form the API takes.
+    private static func isoCode(_ languageCode: String) -> String {
+        String(languageCode.prefix { $0 != "-" && $0 != "_" })
     }
 
     private func emit(_ turn: Turn) {
         DispatchQueue.main.async { self.onUpdate?(turn) }
     }
+}
+
+private extension Data {
+    mutating func append(_ string: String) { append(Data(string.utf8)) }
+}
+
+/// The OpenAI key, from OPENAI_API_KEY or ~/.config/scribe/openai-key.
+/// A plain file rather than the Keychain so the same setup works on Linux.
+enum APIKey {
+    static let file = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent(".config/scribe/openai-key")
+
+    static var openAI: String? {
+        if let env = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !env.isEmpty { return env }
+        let key = (try? String(contentsOf: file, encoding: .utf8))?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return key?.isEmpty == false ? key : nil
+    }
+
+    static let missingMessage = "No OpenAI API key. Put it in ~/.config/scribe/openai-key."
 }

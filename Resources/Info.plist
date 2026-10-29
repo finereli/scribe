@@ -28,7 +28,5 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Scribe records your side of the call from the microphone.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Scribe transcribes your calls as they happen.</string>
 </dict>
 </plist>

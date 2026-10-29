@@ -5,10 +5,10 @@ import AVFoundation
 /// recognition queue.
 ///
 /// A turn opens when this speaker starts talking and closes after a pause.
-/// That keeps every request well under Apple's one-minute server limit
-/// (Hebrew and Russian aren't on-device), gives each turn a real start time
-/// for interleaving the two speakers, and keeps the recognizer idle during
-/// silence.
+/// Each turn is one upload, so turns stay short: the text shows up a second
+/// or two after the turn ends, and a long monologue still arrives in pieces.
+/// It also gives each turn a real start time for interleaving the two
+/// speakers, and nothing is sent during silence.
 final class TurnRecognizer {
     let speaker: Speaker
     private let recognition: RecognitionQueue
@@ -23,8 +23,8 @@ final class TurnRecognizer {
 
     // Pause that ends a turn, and the limits that force one to end.
     private let pauseToEnd: TimeInterval = 1.0
-    private let softLimit: TimeInterval = 40
-    private let hardLimit: TimeInterval = 55
+    private let softLimit: TimeInterval = 15
+    private let hardLimit: TimeInterval = 30
     private let prerollLength: TimeInterval = 0.4
 
     init(speaker: Speaker, recognition: RecognitionQueue) {
