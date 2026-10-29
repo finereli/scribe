@@ -54,8 +54,9 @@ final class MicCapture {
     func stop() {
         if let observer { NotificationCenter.default.removeObserver(observer) }
         observer = nil
-        engine?.inputNode.removeTap(onBus: 0)
+        // Stop first so the tap isn't removed from a running graph.
         engine?.stop()
+        engine?.inputNode.removeTap(onBus: 0)
         engine = nil
     }
 }
