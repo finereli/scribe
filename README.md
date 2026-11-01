@@ -6,6 +6,11 @@
 
 A tiny Mac tool to transcribe your calls and paste them into Claude or ChatGPT. It listens to your Zoom, Meet, Teams or WhatsApp call from your side, so no bot joins, writes down who said what, and hands the transcript to your AI with one click. Free and open source. You bring your own OpenAI key, and an hour-long call costs about 30 cents in transcription.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="screenshots/app-dark.png">
+  <img src="screenshots/app-light.png" alt="Scribe showing the transcript of a call, with Me and Them labelled, next to a list of past calls">
+</picture>
+
 ## Why I made this
 
 A while ago I was on an important sales call. A few minutes in I realized we were on *their* Google Meet, not mine, which meant my note-taking bot was sitting in the waiting room. To get a transcript I'd have had to ask the buyer, in the middle of a pitch, to please let my robot in. I didn't. It felt like asking someone to let you record them while you're trying to get them to trust you.
