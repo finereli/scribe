@@ -64,7 +64,11 @@ final class SessionStore: ObservableObject {
         sessions = folders.compactMap { folder in
             guard let data = try? Data(contentsOf: folder.appendingPathComponent("session.json"))
             else { return nil }
-            return try? decoder.decode(Session.self, from: data)
+            guard var session = try? decoder.decode(Session.self, from: data) else { return nil }
+            // A call the app crashed during never got its duration saved.
+            // The last turn is the best guess.
+            if session.duration == 0 { session.duration = session.turns.map(\.end).max() ?? 0 }
+            return session
         }
         .sorted { $0.createdAt > $1.createdAt }
     }

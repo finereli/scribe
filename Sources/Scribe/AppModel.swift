@@ -182,6 +182,9 @@ final class AppModel: ObservableObject {
         } else {
             return
         }
+        // Keep the duration current, so a crash mid-call doesn't leave it at
+        // zero. stop() replaces it with the exact figure.
+        if turn.isFinal { session.duration = max(session.duration, turn.end) }
         store.update(session, persist: turn.isFinal)
     }
 
