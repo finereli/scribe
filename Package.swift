@@ -6,6 +6,7 @@ let package = Package(
     // Core Audio process taps (system audio capture) need macOS 14.2.
     platforms: [.macOS("14.2")],
     targets: [
-        .executableTarget(name: "Scribe", path: "Sources/Scribe")
+        .target(name: "ObjCTry", path: "Sources/ObjCTry"),
+        .executableTarget(name: "Scribe", dependencies: ["ObjCTry"], path: "Sources/Scribe")
     ]
 )

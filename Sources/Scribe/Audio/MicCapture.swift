@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import CoreAudio
+import ObjCTry
 
 /// Captures the chosen input device (your side of the call) with
 /// AVAudioEngine. A fresh engine per call, so a device picked since the last
@@ -36,12 +37,28 @@ final class MicCapture {
                 NSLocalizedDescriptionKey: "The microphone isn't providing audio. Check microphone permission and that the device is connected."])
         }
 
-        input.installTap(onBus: 0, bufferSize: 2048, format: format) { buffer, _ in
-            handler(buffer)
+        // Even so, the device can change between reading the format and
+        // installing the tap (buds reconnecting mid-restart). AVAudioEngine
+        // then throws an Objective-C exception, which would crash the app.
+        // Catch it and fail this attempt; the watchdog tries again.
+        var error: NSError?
+        let ok = ObjCTry({
+            input.installTap(onBus: 0, bufferSize: 2048, format: format) { buffer, _ in
+                handler(buffer)
+            }
+        }, &error)
+        if !ok {
+            throw NSError(domain: "Scribe.Mic", code: -2, userInfo: [
+                NSLocalizedDescriptionKey: "The microphone changed while starting: \(error?.localizedDescription ?? "unknown")"])
         }
         Log.write("mic: format \(format)")
         engine.prepare()
-        try engine.start()
+        do {
+            try engine.start()
+        } catch {
+            input.removeTap(onBus: 0)
+            throw error
+        }
         self.engine = engine
         // The engine stops itself when the audio setup changes (buds
         // connecting, Meet switching devices). The call's watchdog restarts
