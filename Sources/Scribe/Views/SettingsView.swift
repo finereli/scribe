@@ -1,15 +1,39 @@
 import SwiftUI
 
-/// Scribe ▸ Settings (⌘,). For now, just the OpenAI key.
+/// Scribe ▸ Settings (⌘,): what to do about calls, and the OpenAI key.
 struct SettingsView: View {
     @EnvironmentObject var model: AppModel
     @State private var draft = ""
     @State private var saving = false
     @State private var message: (text: String, isError: Bool)?
     @State private var confirmRemove = false
+    @AppStorage(CallSettings.onStartKey) private var onStart = CallSettings.OnStart.ask
+    @AppStorage(CallSettings.onEndKey) private var onEnd = CallSettings.OnEnd.stop
+    @AppStorage(CallSettings.browsersKey) private var includeBrowsers = true
 
     var body: some View {
         Form {
+            Section {
+                Picker("When a call starts", selection: $onStart) {
+                    Text("Ask to record it").tag(CallSettings.OnStart.ask)
+                    Text("Start recording").tag(CallSettings.OnStart.record)
+                    Text("Do nothing").tag(CallSettings.OnStart.nothing)
+                }
+                Picker("When the call ends", selection: $onEnd) {
+                    Text("Stop recording").tag(CallSettings.OnEnd.stop)
+                    Text("Keep recording").tag(CallSettings.OnEnd.keep)
+                }
+                Toggle("Count calls in web browsers", isOn: $includeBrowsers)
+            } header: {
+                Text("Calls")
+            } footer: {
+                Text("Scribe notices a call when Zoom, Teams, WhatsApp, FaceTime, Slack or another call app turns on your microphone. Browsers count for Google Meet and other web calls, but so does any website that uses the mic. When a call ends, you get \(Int(CallSettings.stopCountdown)) seconds to keep recording before Scribe stops.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             Section {
                 LabeledContent("Status") { status }
                 SecureField(APIKey.current == nil ? "API key" : "Replace key", text: $draft,

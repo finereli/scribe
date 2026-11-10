@@ -36,11 +36,17 @@ final class AppModel: ObservableObject {
     private var activity: NSObjectProtocol?
     private var cancellables = Set<AnyCancellable>()
 
+    let callDetector = CallDetector()
+    /// The call the current recording belongs to, if Scribe saw one. When
+    /// that app lets go of the mic, the recording can stop. See AppModel+Calls.
+    var recordingCall: CallDetector.CallApp?
+
     init() {
         keyState = APIKey.current == nil ? .missing : .unchecked
         selection = store.sessions.first?.id
         AVCaptureDevice.requestAccess(for: .audio) { _ in }
         if keyState == .unchecked { Task { await self.checkStoredKey() } }
+        watchForCalls()
 
         for child in [store.objectWillChange, devices.objectWillChange] {
             child.sink { [weak self] _ in self?.objectWillChange.send() }
@@ -72,7 +78,7 @@ final class AppModel: ObservableObject {
         isRecording ? stop() : start()
     }
 
-    func start() {
+    func start(title: String? = nil) {
         guard !isRecording else { return }
         Log.write("start: mic=\(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) device=\(devices.activeDevice?.name ?? "none") follows=\(devices.followsDefault)")
         switch AVCaptureDevice.authorizationStatus(for: .audio) {
@@ -81,7 +87,7 @@ final class AppModel: ObservableObject {
             return
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .audio) { [weak self] _ in
-                DispatchQueue.main.async { self?.start() }
+                DispatchQueue.main.async { self?.start(title: title) }
             }
             return
         default: break
@@ -90,7 +96,7 @@ final class AppModel: ObservableObject {
         // transcribed once the key is sorted out. The banner says so.
 
         let now = Date()
-        let session = Session(id: UUID(), title: Self.defaultTitle(now), createdAt: now,
+        let session = Session(id: UUID(), title: title ?? "Call \(Self.titleDate(now))", createdAt: now,
                               duration: 0, languageCode: "", turns: [])
         store.add(session)
 
@@ -114,6 +120,9 @@ final class AppModel: ObservableObject {
 
         self.recorder = recorder
         liveID = session.id
+        // Started by hand with a call already going: tie the recording to it.
+        recordingCall = callDetector.current
+        CallOverlay.dismiss()
         liveStart = now
         selection = session.id
         notice = nil
@@ -145,6 +154,8 @@ final class AppModel: ObservableObject {
         activity = nil
         self.recorder = nil
         liveID = nil
+        recordingCall = nil
+        CallOverlay.dismiss()
         liveStart = nil
         micLevel = 0
         systemLevel = 0
@@ -188,10 +199,10 @@ final class AppModel: ObservableObject {
         store.update(session, persist: turn.isFinal)
     }
 
-    private static func defaultTitle(_ date: Date) -> String {
+    static func titleDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.dateFormat = "MMM d, HH:mm"
-        return "Call \(f.string(from: date))"
+        return f.string(from: date)
     }
 
     // MARK: - Editing
